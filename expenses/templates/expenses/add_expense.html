@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}খরচ যোগ করুন{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg" style="border-radius: 15px;">
+                <div class="card-header"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px 15px 0 0;">
+                    <h4 style="color: white; margin: 0;">
+                        <i class="fas fa-plus-circle"></i>
+                        {% if is_edit %}
+                        খরচ সংশোধন
+                        {% else %}
+                        নতুন খরচ যোগ করুন
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" id="expenseForm">
+                        {% csrf_token %}
+
+                        <div class="form-group mb-4">
+                            <label for="id_date" class="form-label fw-bold">তারিখ *</label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                            <div class="text-danger small mt-1">{{ form.date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="id_category" class="form-label fw-bold">ক্যাটাগরি *</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="text-danger small mt-1">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="id_member" class="form-label fw-bold">মেম্বার নির্বাচন করুন *</label>
+                            {{ form.member }}
+                            {% if form.member.errors %}
+                            <div class="text-danger small mt-1">{{ form.member.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="id_description" class="form-label fw-bold">বর্ণনা</label>
+                            {{ form.description }}
+                            <small class="form-text text-muted d-block mt-2">
+                                যেমন: বাজার থেকে সবজি, মাসিক ভাড়া, ইত্যাদি
+                            </small>
+                            {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="id_amount" class="form-label fw-bold">পরিমাণ (টাকা) *</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <div class="text-danger small mt-1">{{ form.amount.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <div class="form-check">
+                                {{ form.is_recurring }}
+                                <label for="id_is_recurring" class="form-check-label fw-bold">
+                                    এটি পুনরাবৃত্ত খরচ? (নিয়মিত খরচ)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="recurringOptions" style="display: none;" class="alert alert-info p-4 mb-4">
+                            <h5 class="mb-3" style="color: #667eea;">
+                                <i class="fas fa-sync-alt"></i> পুনরাবৃত্তি সেটিংস
+                            </h5>
+
+                            <div class="form-group mb-3">
+                                <label for="id_frequency" class="form-label fw-bold">কত দিন পরে পুনরাবৃত্ত হবে?
+                                    *</label>
+                                {{ form.frequency }}
+                                <small class="form-text text-muted d-block mt-2">
+                                    <div
+                                        style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                                        <strong>তথ্য:</strong>
+                                        <ul class="mt-2 mb-0" style="padding-left: 20px;">
+                                            <li><strong>একবার:</strong> শুধুমাত্র এক বার খরচ হবে</li>
+                                            <li><strong>প্রতিদিন:</strong> প্রতিদিন এই খরচ যোগ হবে</li>
+                                            <li><strong>সাপ্তাহিক:</strong> প্রতি সপ্তাহে পুনরাবৃত্ত হবে</li>
+                                            <li><strong>মাসিক:</strong> প্রতি মাসে একই দিনে পুনরাবৃত্ত হবে</li>
+                                            <li><strong>বার্ষিক:</strong> প্রতি বছর একই দিনে পুনরাবৃত্ত হবে ✅</li>
+                                        </ul>
+                                    </div>
+                                </small>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="id_recurring_end_date" class="form-label fw-bold">কখন পর্যন্ত পুনরাবৃত্ত
+                                    করবে?</label>
+                                {{ form.recurring_end_date }}
+                                <small class="form-text text-muted d-block mt-2">খালি রেখে দিলে ৫ বছর পর্যন্ত
+                                    চলবে</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                                <i class="fas fa-save"></i>
+                                {% if is_edit %} আপডেট করুন {% else %} সংরক্ষণ করুন {% endif %}
+                            </button>
+                            <a href="{% url 'expenses:home' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-times"></i> বাতিল
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control,
+    .form-select,
+    select,
+    textarea,
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+        width: 100%;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus,
+    select:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .form-label {
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const recurringCheckbox = document.querySelector('input[name="is_recurring"]');
+        const recurringOptions = document.getElementById('recurringOptions');
+        const frequencyField = document.querySelector('select[name="frequency"]');
+
+        function toggleRecurring() {
+            if (recurringCheckbox.checked) {
+                recurringOptions.style.display = 'block';
+                if (frequencyField) frequencyField.required = true;
+            } else {
+                recurringOptions.style.display = 'none';
+                if (frequencyField) frequencyField.required = false;
+            }
+        }
+
+        if (recurringCheckbox) {
+            toggleRecurring();
+            recurringCheckbox.addEventListener('change', toggleRecurring);
+        }
+
+        document.getElementById('expenseForm').addEventListener('submit', function (e) {
+            if (recurringCheckbox.checked && frequencyField && !frequencyField.value) {
+                e.preventDefault();
+                alert('অনুগ্রহ করে পুনরাবৃত্তির ধরন নির্বাচন করুন!');
+            }
+        });
+    });
+</script>
+{% endblock %}
