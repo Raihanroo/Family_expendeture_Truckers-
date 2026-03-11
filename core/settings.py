@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,18 +25,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-uj*1wsjabg2j64i$5wi1df8unqj3kz9s#vhd6t36%*mm1_3-59"
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-uj*1wsjabg2j64i$5wi1df8unqj3kz9s#vhd6t36%*mm1_3-59"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = [
     "rai32han.pythonanywhere.com",
     "localhost",
     "127.0.0.1",
-    ".railway.app",  # Railway deployment
-    ".herokuapp.com",  # Heroku deployment (backup)
-    "*",  # Allow all hosts during development
-]  # Development এর জন্য সব host allow করুন
+    ".vercel.app",
+    "*",
+]
 
 
 # Application definition
@@ -53,10 +59,6 @@ INSTALLED_APPS = [
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# ৩. লোকাল হোস্টে কাজ করার জন্য এগুলো False রাখা জরুরি (না হলে লগইন সেশন কাজ করবে না)
-DEBUG = True
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -95,10 +97,10 @@ WSGI_APPLICATION = "core.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600,
+    )
 }
 
 # Password validation
@@ -137,11 +139,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Default primary key field type
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"  # এটা add করুন
+)
 # ==================== Login/Logout Redirects ====================
 
 LOGIN_URL = "login"  # Updated: root level login
@@ -154,8 +154,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "https://rai32han.pythonanywhere.com",
-    "https://*.railway.app",
-    "https://*.herokuapp.com",
+    "https://*.vercel.app",
 ]
 
 CSRF_COOKIE_SECURE = True  # Development এ False, Production এ True
