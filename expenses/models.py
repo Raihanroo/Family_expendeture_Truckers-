@@ -147,6 +147,19 @@ class FamilyMember(models.Model):
     def __str__(self):
         return f"{self.name or self.user.username} - {self.role}"
 
+    def total_expenditure(self):
+        """Calculate total expenditure for this member"""
+        total = sum(e.amount for e in self.expenditures.all())
+        return f"{total}৳"
+
+    total_expenditure.short_description = "মোট খরচ"
+
+    def total_expenses_count(self):
+        """Count total expenses for this member"""
+        return self.expenditures.count()
+
+    total_expenses_count.short_description = "মোট লেনদেন"
+
 
 # ✅ নতুন — Expenditure
 class Expenditure(models.Model):

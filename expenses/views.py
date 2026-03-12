@@ -72,12 +72,22 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 @login_required
 def home(request):
     user = request.user
+    is_admin = user.is_superuser  # Check if user is admin
     search_query = request.GET.get("search", "").strip()
-    all_expenses = (
-        Expense.objects.filter(user=user)
-        .select_related("category", "member__user")
-        .order_by("-date")
-    )
+
+    # Admin sees all expenses, regular users see only their own
+    if is_admin:
+        all_expenses = (
+            Expense.objects.all()
+            .select_related("category", "member__user", "user")
+            .order_by("-date")
+        )
+    else:
+        all_expenses = (
+            Expense.objects.filter(user=user)
+            .select_related("category", "member__user")
+            .order_by("-date")
+        )
 
     # --- সার্চ লজিক ---
     converted_date = None
@@ -97,6 +107,7 @@ def home(request):
             | Q(category__name__icontains=search_query)
             | Q(member__name__icontains=search_query)
             | Q(member__user__username__icontains=search_query)
+            | Q(user__username__icontains=search_query)  # Admin can search by username
         )
         if converted_date:
             query_filter |= Q(date=converted_date)
@@ -144,6 +155,7 @@ def home(request):
         "pie_data": json.dumps(pie_data),
         "bar_labels": json.dumps(bar_labels),  # নতুন ডেটা
         "bar_data": json.dumps(bar_data),  # নতুন ডেটা
+        "is_admin": is_admin,  # Tell template if user is admin
     }
 
     return render(request, "expenses/home.html", context)

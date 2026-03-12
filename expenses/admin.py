@@ -60,10 +60,20 @@ class ExpenseCategoryAdmin(admin.ModelAdmin):
 
 # FamilyMember Admin
 class FamilyMemberAdmin(admin.ModelAdmin):
-    list_display = ["name", "user", "role", "phone_number", "joined_date"]
+    list_display = [
+        "name",
+        "user",
+        "role",
+        "phone_number",
+        "salary",
+        "total_expenditure",
+        "total_expenses_count",
+        "joined_date",
+    ]
     list_filter = ["role", "joined_date"]
     search_fields = ["name", "user__username", "phone_number"]
     list_per_page = 30
+    readonly_fields = ["total_expenditure", "total_expenses_count"]
 
     class Media:
         css = {"all": ("admin/css/custom_admin.css",)}

@@ -51,8 +51,20 @@
 </head>
 <body>
     <div class="navbar">
-        <h1>📊 Family Dashboard</h1>
-        <a href="{% url 'expenses:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h1>📊 Family Dashboard</h1>
+            {% if is_admin %}
+            <span style="background: #ffd700; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                <i class="fas fa-crown"></i> ADMIN
+            </span>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {% if is_admin %}
+            <a href="/admin" target="_blank" style="background: #2d3748;"><i class="fas fa-cogs"></i> Admin Panel</a>
+            {% endif %}
+            <a href="{% url 'expenses:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
     </div>
 
     <div class="container">
@@ -110,6 +122,9 @@
                 <thead>
                     <tr>
                         <th>Date</th>
+                        {% if is_admin %}
+                        <th>User</th>
+                        {% endif %}
                         <th>Member</th>
                         <th>Category</th>
                         <th>Description</th>
@@ -121,6 +136,9 @@
                     {% for expense in expenses %}
                     <tr>
                         <td>{{ expense.date|date:"d M, Y" }}</td>
+                        {% if is_admin %}
+                        <td><span style="background: #e0e7ff; color: #4338ca; padding: 3px 10px; border-radius: 12px; font-size: 12px;">{{ expense.user.username }}</span></td>
+                        {% endif %}
                         <td>{{ expense.member.name|default:expense.member.user.username }}</td>
                         <td><span class="category-badge">{{ expense.category.name|default:"General" }}</span></td>
                         <td>{{ expense.description|truncatechars:30 }}</td>
