@@ -1,0 +1,267 @@
+/* Custom Admin Theme - Beautiful Design */
+
+/* ===== HEADER STYLING ===== */
+#header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-bottom: 3px solid #764ba2 !important;
+}
+
+#header a:link, #header a:visited {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+#header .user-tools {
+    color: #ffffff !important;
+}
+
+#header .user-tools a:link, #header .user-tools a:visited {
+    color: #ffffff !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2) !important;
+}
+
+/* ===== SIDEBAR STYLING ===== */
+#django-admin-logout-form button {
+    color: #ffffff !important;
+}
+
+/* ===== BODY BACKGROUND ===== */
+body {
+    background-color: #f8f9fa !important;
+    background-image: linear-gradient(120deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+
+/* ===== MODULE HEADERS ===== */
+.module h2, .module caption {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 10px 15px !important;
+}
+
+/* ===== TABLE STYLING ===== */
+#result_list {
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+}
+
+#result_list thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border: none !important;
+    padding: 12px !important;
+}
+
+#result_list tbody tr {
+    background-color: #ffffff !important;
+    transition: all 0.3s ease !important;
+}
+
+#result_list tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+}
+
+#result_list tbody tr:hover {
+    background-color: #e8eeff !important;
+    transform: scale(1.01) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+#result_list td, #result_list th {
+    border-color: #dee2e6 !important;
+    padding: 10px 12px !important;
+    vertical-align: middle !important;
+}
+
+/* ===== BUTTONS ===== */
+.button, input[type="submit"], .submit-row input {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+}
+
+.button:hover, input[type="submit"]:hover, .submit-row input:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a4199 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25) !important;
+}
+
+.button.default, input[type="submit"].default {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+}
+
+.button.default:hover {
+    background: linear-gradient(135deg, #0f8a7d 0%, #2dd36a 100%) !important;
+}
+
+/* ===== SEARCH BAR ===== */
+#searchbar {
+    border-radius: 20px !important;
+    border: 2px solid #667eea !important;
+    padding: 8px 15px !important;
+    background-color: #ffffff !important;
+    transition: all 0.3s ease !important;
+}
+
+#searchbar:focus {
+    border-color: #764ba2 !important;
+    box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2) !important;
+    outline: none !important;
+}
+
+/* ===== FILTERS SIDEBAR ===== */
+#changelist-filter {
+    background-color: #ffffff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+}
+
+#changelist-filter h3 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 10px !important;
+}
+
+#changelist-filter li a {
+    color: #495057 !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+#changelist-filter li a:hover {
+    background-color: #e8eeff !important;
+    color: #667eea !important;
+}
+
+#changelist-filter li.selected a {
+    background-color: #667eea !important;
+    color: #ffffff !important;
+    border-radius: 5px !important;
+}
+
+/* ===== ADD BUTTON ===== */
+.addlink {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    color: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 8px 15px !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+}
+
+.addlink:hover {
+    background: linear-gradient(135deg, #0f8a7d 0%, #2dd36a 100%) !important;
+    color: #ffffff !important;
+}
+
+/* ===== PAGINATOR ===== */
+.paginator {
+    background-color: #ffffff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    padding: 10px !important;
+}
+
+.paginator a:link, .paginator a:visited {
+    color: #667eea !important;
+    padding: 5px 10px !important;
+    border-radius: 5px !important;
+}
+
+.paginator a:hover {
+    background-color: #667eea !important;
+    color: #ffffff !important;
+}
+
+.paginator span.this-page {
+    color: #764ba2 !important;
+    font-weight: 600 !important;
+}
+
+/* ===== MESSAGES ===== */
+.messagelist li {
+    border-radius: 8px !important;
+    padding: 12px 15px !important;
+    margin: 10px 0 !important;
+}
+
+.messagelist li.success {
+    background-color: #d4edda !important;
+    border-left: 4px solid #28a745 !important;
+    color: #155724 !important;
+}
+
+.messagelist li.error {
+    background-color: #f8d7da !important;
+    border-left: 4px solid #dc3545 !important;
+    color: #721c24 !important;
+}
+
+.messagelist li.warning {
+    background-color: #fff3cd !important;
+    border-left: 4px solid #ffc107 !important;
+    color: #856404 !important;
+}
+
+.messagelist li.info {
+    background-color: #d1ecf1 !important;
+    border-left: 4px solid #17a2b8 !important;
+    color: #0c5460 !important;
+}
+
+/* ===== FORM FIELDS ===== */
+.form-row {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 15px !important;
+    margin: 10px 0 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+
+label {
+    color: #495057 !important;
+    font-weight: 600 !important;
+}
+
+input[type="text"], input[type="password"], input[type="email"], 
+input[type="number"], textarea, select {
+    border-radius: 6px !important;
+    border: 2px solid #dee2e6 !important;
+    padding: 8px 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, 
+input[type="email"]:focus, input[type="number"]:focus, 
+textarea:focus, select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+    outline: none !important;
+}
+
+/* ===== DELETE CONFIRMATION ===== */
+#content {
+    background-color: #ffffff !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+    padding: 20px !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    #result_list {
+        font-size: 14px !important;
+    }
+    
+    #result_list th, #result_list td {
+        padding: 8px !important;
+    }
+}
