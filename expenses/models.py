@@ -27,8 +27,8 @@ class Expense(models.Model):
         "FamilyMember",
         on_delete=models.CASCADE,
         related_name="expenses",
-        null=True,  # ডাটাবেজে খালি থাকার অনুমতি দেয়
-        blank=True,  # ফর্মে খালি রাখার অনুমতি দেয়
+        null=True,  # ডাটাবেজে খালি থাকার অনুমতি দেয়
+        blank=True,  # ফর্মে খালি রাখার অনুমতি দেয়
     )
 
     description = models.TextField(blank=True, null=True)
@@ -126,7 +126,6 @@ class FamilyMember(models.Model):
         ("MEMBER", "Member"),
         ("Visitor", "Visitor"),
     ]
-    photo = models.ImageField(upload_to="member_photos/", null=True, blank=True)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="family_memberships"
     )
@@ -164,4 +163,5 @@ class Expenditure(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.member.name} → {self.category} → {self.amount}৳"
+        category_name = self.category.name if self.category else "No Category"
+        return f"{self.member.name} → {category_name} → {self.amount}৳"

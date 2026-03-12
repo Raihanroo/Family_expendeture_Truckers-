@@ -121,9 +121,8 @@ class FamilyMemberForm(forms.ModelForm):
             "phone_number",
             "income_source",
             "salary",
-            "address",      # নতুন যুক্ত
+            "address",  # নতুন যুক্ত
             "role",
-            "photo",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -132,7 +131,7 @@ class FamilyMemberForm(forms.ModelForm):
             "father_name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "বাবার নাম"}
             ),
-            "mother_name": forms.TextInput( # নতুন যুক্ত
+            "mother_name": forms.TextInput(  # নতুন যুক্ত
                 attrs={"class": "form-control", "placeholder": "মায়ের নাম"}
             ),
             "phone_number": forms.TextInput(
@@ -144,8 +143,12 @@ class FamilyMemberForm(forms.ModelForm):
             "salary": forms.NumberInput(
                 attrs={"class": "form-control", "placeholder": "মাসিক আয়"}
             ),
-            "address": forms.Textarea(      # নতুন যুক্ত
-                attrs={"class": "form-control", "placeholder": "সম্পূর্ণ ঠিকানা", "rows": 3}
+            "address": forms.Textarea(  # নতুন যুক্ত
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "সম্পূর্ণ ঠিকানা",
+                    "rows": 3,
+                }
             ),
             "role": forms.Select(attrs={"class": "form-control"}),
         }
