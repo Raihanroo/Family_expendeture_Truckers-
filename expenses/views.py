@@ -68,6 +68,97 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@login_required
+def admin_dashboard(request):
+    """Custom Professional Admin Dashboard - Only for superusers"""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Admin only.")
+        return redirect("expenses:home")
+
+    user = request.user
+    today = datetime.today()
+
+    # Get all expenses (admin sees all)
+    all_expenses = Expense.objects.all().select_related("category", "member__user")
+
+    # Stats
+    total_this_month = (
+        all_expenses.filter(date__year=today.year, date__month=today.month).aggregate(
+            Sum("amount")
+        )["amount__sum"]
+        or 0
+    )
+
+    total_all_time = all_expenses.aggregate(Sum("amount"))["amount__sum"] or 0
+    total_expenses_count = all_expenses.count()
+    expenses_this_month = all_expenses.filter(
+        date__year=today.year, date__month=today.month
+    ).count()
+
+    # Members stats
+    total_members = FamilyMember.objects.count()
+    admin_count = FamilyMember.objects.filter(role="ADMIN").count()
+    member_count = FamilyMember.objects.filter(role="MEMBER").count()
+
+    # Categories
+    total_categories = ExpenseCategory.objects.count()
+    total_income_sources = IncomeSource.objects.count()
+
+    # Budget
+    monthly_budget = Budget.objects.filter(user=user).first()
+    budget_amount = monthly_budget.monthly_budget if monthly_budget else 0
+    budget_percentage = (
+        (total_this_month / budget_amount * 100) if budget_amount > 0 else 0
+    )
+
+    # Pie Chart
+    current_month_expenses = all_expenses.filter(
+        date__year=today.year, date__month=today.month
+    )
+    category_breakdown = (
+        current_month_expenses.values("category__name")
+        .annotate(total=Sum("amount"))
+        .order_by("-total")
+    )
+    pie_labels = [item["category__name"] or "General" for item in category_breakdown]
+    pie_data = [float(item["total"]) for item in category_breakdown]
+
+    # Bar Chart
+    seven_days_ago = today - timedelta(days=7)
+    last_7_days_expenses = all_expenses.filter(date__gte=seven_days_ago)
+    daily_spending = (
+        last_7_days_expenses.values("date")
+        .annotate(total=Sum("amount"))
+        .order_by("date")
+    )
+    bar_labels = [item["date"].strftime("%d %b") for item in daily_spending]
+    bar_data = [float(item["total"]) for item in daily_spending]
+
+    # Recent expenses
+    recent_expenses = all_expenses.order_by("-date")[:10]
+
+    context = {
+        "total_this_month": total_this_month,
+        "total_all_time": total_all_time,
+        "total_expenses_count": total_expenses_count,
+        "expenses_this_month": expenses_this_month,
+        "total_members": total_members,
+        "admin_count": admin_count,
+        "member_count": member_count,
+        "total_categories": total_categories,
+        "total_income_sources": total_income_sources,
+        "monthly_budget": budget_amount,
+        "budget_percentage": budget_percentage,
+        "recent_expenses": recent_expenses,
+        "pie_labels": json.dumps(pie_labels),
+        "pie_data": json.dumps(pie_data),
+        "bar_labels": json.dumps(bar_labels),
+        "bar_data": json.dumps(bar_data),
+    }
+
+    return render(request, "expenses/admin_dashboard.html", context)
+
+
 # --- Dashboard View ---
 @login_required
 def home(request):

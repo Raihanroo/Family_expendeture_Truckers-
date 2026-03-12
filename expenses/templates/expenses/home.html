@@ -84,6 +84,9 @@
         </div>
 
         <div class="action-buttons">
+            {% if is_admin %}
+            <a href="{% url 'expenses:admin_dashboard' %}" class="btn btn-dark" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);"><i class="fas fa-crown"></i> Admin Dashboard</a>
+            {% endif %}
             <a href="{% url 'expenses:add_expense' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Add New Expense</a>
             <a href="{% url 'expenses:view_expenses' %}" class="btn btn-secondary"><i class="fas fa-list"></i> View All Expenses</a>
             <a href="{% url 'expenses:member_list' %}" class="btn btn-member"><i class="fas fa-user-plus"></i> Add Member</a>

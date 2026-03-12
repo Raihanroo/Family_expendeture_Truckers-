@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/", include(router.urls)),
     # ৩. আপনার বিদ্যমান HTML Template URLs
     path("", views.home, name="home"),
+    path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
     path("add/", views.add_expense, name="add_expense"),
     path("view/", views.view_expenses, name="view_expenses"),
     path("edit/<int:pk>/", views.edit_expense, name="edit_expense"),
