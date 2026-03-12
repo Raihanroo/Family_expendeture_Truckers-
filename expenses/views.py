@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from datetime import datetime, timedelta
-import pandas as pd
 import json
 import xlwt
+import openpyxl
 from django.http import HttpResponse
 
 # REST Framework
@@ -84,7 +84,9 @@ def home(request):
     if search_query:
         for fmt in ("%d %b, %Y", "%d %b %Y", "%Y-%m-%d"):
             try:
-                converted_date = datetime.strptime(search_query, fmt).strftime("%Y-%m-%d")
+                converted_date = datetime.strptime(search_query, fmt).strftime(
+                    "%Y-%m-%d"
+                )
                 break
             except ValueError:
                 continue
@@ -107,7 +109,9 @@ def home(request):
     current_month_expenses = all_expenses.filter(
         date__year=today.year, date__month=today.month
     )
-    total_this_month = current_month_expenses.aggregate(Sum("amount"))["amount__sum"] or 0
+    total_this_month = (
+        current_month_expenses.aggregate(Sum("amount"))["amount__sum"] or 0
+    )
     total_all_time = all_expenses.aggregate(Sum("amount"))["amount__sum"] or 0
 
     # --- Pie Chart ডেটা ---
@@ -139,10 +143,11 @@ def home(request):
         "pie_labels": json.dumps(pie_labels),
         "pie_data": json.dumps(pie_data),
         "bar_labels": json.dumps(bar_labels),  # নতুন ডেটা
-        "bar_data": json.dumps(bar_data),      # নতুন ডেটা
+        "bar_data": json.dumps(bar_data),  # নতুন ডেটা
     }
-    
+
     return render(request, "expenses/home.html", context)
+
 
 # --- Export Excel ---
 @login_required
@@ -303,12 +308,16 @@ def member_list(request):
             }
             for m in members
         ]
-        df = pd.DataFrame(data)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(["Name", "Phone", "Role", "Income Source", "Salary"])
+        for row in data:
+            ws.append(list(row.values()))
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         response["Content-Disposition"] = "attachment; filename=members.xlsx"
-        df.to_excel(response, index=False)
+        wb.save(response)
         return response
 
     return render(request, "expenses/member_list.html", {"members": members})
@@ -420,14 +429,16 @@ def view_expenses(request):
             for e in expenses
         ]
 
-        df = pd.DataFrame(data)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(["Date", "Category", "Description", "Amount"])
+        for row in data:
+            ws.append(list(row.values()))
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         response["Content-Disposition"] = "attachment; filename=filtered_expenses.xlsx"
-
-        # এক্সেল ফাইল তৈরি
-        df.to_excel(response, index=False)
+        wb.save(response)
         return response
 
     # ৪. টোটাল হিসাব করা
