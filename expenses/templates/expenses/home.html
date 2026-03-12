@@ -55,9 +55,6 @@
             <h1>📊 Family Dashboard</h1>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            {% if is_admin %}
-            <a href="/admin" target="_blank"><i class="fas fa-cogs"></i> Admin Panel</a>
-            {% endif %}
             <a href="{% url 'expenses:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </div>
