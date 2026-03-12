@@ -491,12 +491,21 @@ def login_view(request):
 
 # Admin Registration View
 def admin_register(request):
-    """Registration view for creating admin users"""
+    """Registration view for creating admin users - Limited to 3 admins"""
+    admin_count = User.objects.filter(is_superuser=True).count()
+
+    if admin_count >= 3:
+        messages.error(
+            request, "Maximum admin limit reached (3). Please contact existing admin."
+        )
+        return redirect("expenses:login")
+
     if request.method == "POST":
         username = request.POST.get("username")
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
+        secret_key = request.POST.get("secret_key")
 
         # Validation
         if password != confirm_password:
@@ -511,6 +520,14 @@ def admin_register(request):
 
         if User.objects.filter(email=email).exists():
             return render(request, "register.html", {"error": "Email already exists!"})
+
+        # Check secret key (you can change this code)
+        if secret_key != "admin123":
+            return render(
+                request,
+                "register.html",
+                {"error": "Invalid secret key! Contact admin for the code."},
+            )
 
         # Create admin user
         user = User.objects.create_user(

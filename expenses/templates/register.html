@@ -182,13 +182,24 @@
                 <input 
                     type="password" 
                     id="password_confirm" 
-                    name="password_confirm" 
+                    name="confirm_password" 
                     placeholder="Confirm password" 
                     required
                 >
             </div>
             
-            <button type="submit" class="btn-register">Create Account</button>
+            <div class="form-group">
+                <label for="secret_key">Secret Key (Admin Code)</label>
+                <input 
+                    type="password" 
+                    id="secret_key" 
+                    name="secret_key" 
+                    placeholder="Enter admin secret key" 
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="btn-register">Create Admin Account</button>
         </form>
         
         <p class="login-link">
