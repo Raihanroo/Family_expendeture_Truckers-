@@ -549,6 +549,30 @@ def logout_view(request):
     return redirect("expenses:login")
 
 
+# Admin Login View
+def admin_login_view(request):
+    """Separate login for admin users"""
+    if request.method == "POST":
+        u, p = request.POST.get("username"), request.POST.get("password")
+        user = authenticate(username=u, password=p)
+
+        if user:
+            if user.is_superuser:
+                login(request, user)
+                return redirect("expenses:admin_dashboard")
+            else:
+                return render(
+                    request,
+                    "login_admin.html",
+                    {"error": "Not an admin account! Use user login."},
+                )
+        else:
+            return render(
+                request, "login_admin.html", {"error": "Invalid username or password!"}
+            )
+    return render(request, "login_admin.html")
+
+
 @login_required
 def set_budget(request):
     budget, _ = Budget.objects.get_or_create(user=request.user)
