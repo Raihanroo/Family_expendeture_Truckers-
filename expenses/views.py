@@ -480,7 +480,51 @@ def login_view(request):
         if user:
             login(request, user)
             return redirect("expenses:home")
+        else:
+            # Invalid credentials - show error
+            messages.error(request, "Invalid username or password!")
+            return render(
+                request, "login.html", {"error": "Invalid username or password!"}
+            )
     return render(request, "login.html")
+
+
+# Admin Registration View
+def admin_register(request):
+    """Registration view for creating admin users"""
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        # Validation
+        if password != confirm_password:
+            return render(
+                request, "register.html", {"error": "Passwords do not match!"}
+            )
+
+        if User.objects.filter(username=username).exists():
+            return render(
+                request, "register.html", {"error": "Username already exists!"}
+            )
+
+        if User.objects.filter(email=email).exists():
+            return render(request, "register.html", {"error": "Email already exists!"})
+
+        # Create admin user
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            is_superuser=True,  # Make them admin
+            is_staff=True,
+        )
+
+        messages.success(request, "Admin account created successfully! Please login.")
+        return redirect("expenses:login")
+
+    return render(request, "register.html")
 
 
 def logout_view(request):
