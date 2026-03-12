@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class Expense(models.Model):
@@ -126,6 +127,7 @@ class FamilyMember(models.Model):
         ("MEMBER", "Member"),
         ("Visitor", "Visitor"),
     ]
+    photo = CloudinaryField("image", folder="member_photos/", null=True, blank=True)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="family_memberships"
     )

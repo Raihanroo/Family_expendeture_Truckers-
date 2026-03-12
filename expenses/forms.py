@@ -123,6 +123,7 @@ class FamilyMemberForm(forms.ModelForm):
             "salary",
             "address",  # নতুন যুক্ত
             "role",
+            "photo",
         ]
         widgets = {
             "name": forms.TextInput(

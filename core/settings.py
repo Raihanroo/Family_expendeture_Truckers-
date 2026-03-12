@@ -53,7 +53,17 @@ INSTALLED_APPS = [
     "expenses",  # আপনার app
     "crispy_bootstrap5",
     "crispy_forms",
+    "cloudinary_storage",
+    "cloudinary",
 ]
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
+}
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 
 # ২. Crispy Forms এর জন্য এটি ফাইলের যেকোনো জায়গায় যোগ করুন
