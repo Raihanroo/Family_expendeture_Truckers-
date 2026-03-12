@@ -573,6 +573,46 @@ def admin_login_view(request):
     return render(request, "login_admin.html")
 
 
+# User Registration View
+def user_register(request):
+    """Registration view for regular users (not admins)"""
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        # Validation
+        if password != confirm_password:
+            return render(
+                request, "register_user.html", {"error": "Passwords do not match!"}
+            )
+
+        if User.objects.filter(username=username).exists():
+            return render(
+                request, "register_user.html", {"error": "Username already exists!"}
+            )
+
+        if User.objects.filter(email=email).exists():
+            return render(
+                request, "register_user.html", {"error": "Email already exists!"}
+            )
+
+        # Create regular user (NOT admin)
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            is_superuser=False,
+            is_staff=False,
+        )
+
+        messages.success(request, "Account created successfully! Please login.")
+        return redirect("expenses:login")
+
+    return render(request, "register_user.html")
+
+
 @login_required
 def set_budget(request):
     budget, _ = Budget.objects.get_or_create(user=request.user)
