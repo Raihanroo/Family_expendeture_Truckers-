@@ -14,22 +14,25 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('api-auth/', include('rest_framework.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+
 # নিচে এই দুটি লাইন নতুন যোগ করুন
 from django.conf import settings
 from django.conf.urls.static import static
+from expenses.views import api_docs
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    
+    path("admin/", admin.site.urls),
+    # API Documentation
+    path("API_Documentation.html", api_docs, name="api_docs"),
+    path("api/docs", api_docs, name="api_docs"),
     # API এবং সাধারণ ভিউ সব এই এক লাইনেই ইনক্লুড হবে
-    path('expenses/', include('expenses.urls')), 
-    
+    path("expenses/", include("expenses.urls")),
     # ইউজার যদি শুধু মেইন ডোমেইনে আসে, তবে তাকে লগইনে পাঠিয়ে দেবে
-    path('', RedirectView.as_view(url='/expenses/login/', permanent=False)),
-
+    path("", RedirectView.as_view(url="/expenses/login/", permanent=False)),
 ]
 
 # এটি যোগ করুন যাতে ডেভেলপমেন্ট মোডে আপলোড করা ছবি দেখা যায়
