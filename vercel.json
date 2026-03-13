@@ -39,7 +39,8 @@
   "env": {
     "DJANGO_SETTINGS_MODULE": "core.settings",
     "SECRET_KEY": "@vercel_secret_key",
-    "DEBUG": "False",
+    "DEBUG": "True",
     "ALLOWED_HOSTS": "*.vercel.app"
-  }
+  },
+  "framework": null
 }
