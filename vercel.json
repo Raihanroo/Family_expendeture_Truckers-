@@ -2,10 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "API_Documentation.html",
-      "use": "@vercel/static"
-    },
-    {
       "src": "core/wsgi.py",
       "use": "@vercel/python",
       "config": {
@@ -17,10 +13,7 @@
   "routes": [
     {
       "src": "/API_Documentation.html",
-      "dest": "/API_Documentation.html",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
-      }
+      "dest": "/API_Documentation.html"
     },
     {
       "src": "/api/docs",
