@@ -9,6 +9,17 @@ import json
 import xlwt
 import openpyxl
 from django.http import HttpResponse
+from django.conf import settings
+import os
+
+
+# --- API Documentation View ---
+def api_docs(request):
+    """Serve the API documentation HTML file"""
+    docs_path = os.path.join(settings.BASE_DIR, 'API_Documentation.html')
+    with open(docs_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return HttpResponse(content, content_type='text/html')
 
 # REST Framework
 from rest_framework import viewsets, permissions

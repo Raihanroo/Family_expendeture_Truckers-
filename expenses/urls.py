@@ -20,6 +20,9 @@ router.register(r"expenditures", ExpenditureViewSet, basename="expenditure")
 app_name = "expenses"
 
 urlpatterns = [
+    # API Documentation
+    path("API_Documentation.html", views.api_docs, name="api_docs"),
+    path("api/docs", views.api_docs, name="api_docs"),
     # ২. DRF API URLs
     path("api/", include(router.urls)),
     # ৩. আপনার বিদ্যমান HTML Template URLs
