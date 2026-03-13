@@ -13,11 +13,11 @@
   "routes": [
     {
       "src": "/API_Documentation.html",
-      "dest": "/API_Documentation.html"
+      "dest": "/static/API_Documentation.html"
     },
     {
       "src": "/api/docs",
-      "dest": "/API_Documentation.html"
+      "dest": "/static/API_Documentation.html"
     },
     {
       "src": "/static/admin/(.*)",
@@ -41,6 +41,5 @@
     "SECRET_KEY": "@vercel_secret_key",
     "DEBUG": "True",
     "ALLOWED_HOSTS": "*.vercel.app"
-  },
-  "framework": null
+  }
 }
