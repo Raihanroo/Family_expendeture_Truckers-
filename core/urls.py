@@ -26,7 +26,7 @@ from expenses.views import api_docs
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # API Documentation
+    # API Documentation - serves HTML file
     path("API_Documentation.html", api_docs, name="api_docs"),
     path("api/docs", api_docs, name="api_docs"),
     # API এবং সাধারণ ভিউ সব এই এক লাইনেই ইনক্লুড হবে
