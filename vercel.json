@@ -13,11 +13,11 @@
   "routes": [
     {
       "src": "/API_Documentation.html",
-      "dest": "/static/API_Documentation.html"
+      "dest": "/staticfiles/API_Documentation.html"
     },
     {
       "src": "/api/docs",
-      "dest": "/static/API_Documentation.html"
+      "dest": "/staticfiles/API_Documentation.html"
     },
     {
       "src": "/static/admin/(.*)",

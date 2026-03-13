@@ -1,10 +1,8 @@
-#!/usr/bin/env bash
-# exit on error
-set -o errexit
+#!/bin/bash
+# Build script for Vercel
 
-# সঠিক ফোল্ডারের ভেতরে গিয়ে ইনস্টল করা
-pip install -r Family_expendeture/requirements.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# সঠিক পাথে manage.py রান করা
-python Family_expendeture/manage.py collectstatic --no-input
-python Family_expendeture/manage.py migrate
+# Collect static files
+python manage.py collectstatic --noinput
