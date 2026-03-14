@@ -8,6 +8,13 @@
         "maxLambdaSize": "50mb",
         "runtime": "python3.11"
       }
+    },
+    {
+      "src": "build.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "staticfiles"
+      }
     }
   ],
   "routes": [
@@ -31,7 +38,7 @@
   "env": {
     "DJANGO_SETTINGS_MODULE": "core.settings",
     "SECRET_KEY": "@vercel_secret_key",
-    "DEBUG": "True",
+    "DEBUG": "False",
     "ALLOWED_HOSTS": "*.vercel.app"
   }
 }
