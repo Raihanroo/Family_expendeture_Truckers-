@@ -31,6 +31,10 @@
       "dest": "/staticfiles/$1"
     },
     {
+      "src": "/API_Documentation.html",
+      "dest": "/staticfiles/API_Documentation.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "core/wsgi.py"
     }
