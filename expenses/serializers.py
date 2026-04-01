@@ -25,30 +25,22 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
 
 
 class FamilyMemberSerializer(serializers.ModelSerializer):
-    # FamilyMember model এর জন্য serializer
-
-    income_source_name = serializers.CharField(
-        source="income_source.name",
-        read_only=True,
-        # source='income_source.name' মানে: ForeignKey দিয়ে গিয়ে IncomeSource এর name নিয়ে আসো
-        # read_only=True মানে: শুধু দেখা যাবে, পরিবর্তন করা যাবে না
-    )
+    # income_source is a CharField (not a ForeignKey), so we expose it directly.
 
     class Meta:
         model = FamilyMember
         fields = [
-            "id",  # Member এর unique ID
-            "user",  # কোন User এর সাথে linked
-            "role",  # ADMIN / MEMBER / VIEWER
-            "joined_date",  # কবে যোগ দিয়েছে
-            "name",  # Member এর নাম
-            "father_name",  # বাবার নাম
-            "mother_name",  # মায়ের নাম
-            "phone_number",  # ফোন নম্বর
-            "address",  # ঠিকানা
-            "income_source",  # আয়ের উৎস এর ID আসবে
-            "income_source_name",  # আয়ের উৎস এর নাম আসবে (যেমন: "চাকরি")
-            "salary",  # মাসিক বেতন/আয়
+            "id",
+            "user",
+            "role",
+            "joined_date",
+            "name",
+            "father_name",
+            "mother_name",
+            "phone_number",
+            "address",
+            "income_source",
+            "salary",
         ]
 
 

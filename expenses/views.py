@@ -1,46 +1,43 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
-from django.contrib import messages
-from django.db.models import Sum, Count, Q
-from datetime import datetime, timedelta
 import json
-import xlwt
-import openpyxl
-from django.http import HttpResponse
-from django.conf import settings
 import os
+import openpyxl
+from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+
+from rest_framework import permissions, viewsets
+
+from .forms import BudgetForm, ExpenseForm, FamilyMemberForm
+from .models import (
+    Budget,
+    Expense,
+    ExpenseCategory,
+    Expenditure,
+    FamilyMember,
+    IncomeSource,
+)
+from .serializers import (
+    ExpenseCategorySerializer,
+    ExpenditureSerializer,
+    ExpenseSerializer,
+    FamilyMemberSerializer,
+    IncomeSourceSerializer,
+)
 
 
 # --- API Documentation View ---
 def api_docs(request):
-    """Serve the API documentation HTML file"""
-    docs_path = os.path.join(settings.BASE_DIR, 'API_Documentation.html')
-    with open(docs_path, 'r', encoding='utf-8') as f:
+    docs_path = os.path.join(settings.BASE_DIR, "API_Documentation.html")
+    with open(docs_path, "r", encoding="utf-8") as f:
         content = f.read()
-    return HttpResponse(content, content_type='text/html')
-
-# REST Framework
-from rest_framework import viewsets, permissions
-
-# মডেল এবং ফর্ম ইম্পোর্ট
-from .models import (
-    Expense,
-    Budget,
-    FamilyMember,
-    IncomeSource,
-    ExpenseCategory,
-    Expenditure,
-)
-from .forms import BudgetForm, ExpenseForm, FamilyMemberForm
-from .serializers import (
-    ExpenseSerializer,
-    FamilyMemberSerializer,
-    IncomeSourceSerializer,
-    ExpenseCategorySerializer,
-    ExpenditureSerializer,
-)
+    return HttpResponse(content, content_type="text/html")
 
 
 # --- API ViewSets ---
@@ -57,15 +54,19 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
 
 
 class FamilyMemberViewSet(viewsets.ModelViewSet):
-    queryset = FamilyMember.objects.all()
     serializer_class = FamilyMemberSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        return FamilyMember.objects.filter(user=self.request.user)
+
 
 class ExpenditureViewSet(viewsets.ModelViewSet):
-    queryset = Expenditure.objects.all()
     serializer_class = ExpenditureSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Expenditure.objects.filter(member__user=self.request.user)
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -79,50 +80,40 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+# --- Admin Dashboard ---
 @login_required
 def admin_dashboard(request):
-    """Custom Professional Admin Dashboard - Only for superusers"""
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admin only.")
         return redirect("expenses:home")
 
-    user = request.user
     today = datetime.today()
-
-    # Get all expenses (admin sees all)
     all_expenses = Expense.objects.all().select_related("category", "member__user")
 
-    # Stats
     total_this_month = (
-        all_expenses.filter(date__year=today.year, date__month=today.month).aggregate(
-            Sum("amount")
-        )["amount__sum"]
+        all_expenses.filter(
+            date__year=today.year, date__month=today.month
+        ).aggregate(Sum("amount"))["amount__sum"]
         or 0
     )
-
     total_all_time = all_expenses.aggregate(Sum("amount"))["amount__sum"] or 0
     total_expenses_count = all_expenses.count()
     expenses_this_month = all_expenses.filter(
         date__year=today.year, date__month=today.month
     ).count()
 
-    # Members stats
     total_members = FamilyMember.objects.count()
     admin_count = FamilyMember.objects.filter(role="ADMIN").count()
     member_count = FamilyMember.objects.filter(role="MEMBER").count()
-
-    # Categories
     total_categories = ExpenseCategory.objects.count()
     total_income_sources = IncomeSource.objects.count()
 
-    # Budget
-    monthly_budget = Budget.objects.filter(user=user).first()
+    monthly_budget = Budget.objects.filter(user=request.user).first()
     budget_amount = monthly_budget.monthly_budget if monthly_budget else 0
     budget_percentage = (
         (total_this_month / budget_amount * 100) if budget_amount > 0 else 0
     )
 
-    # Pie Chart
     current_month_expenses = all_expenses.filter(
         date__year=today.year, date__month=today.month
     )
@@ -134,19 +125,15 @@ def admin_dashboard(request):
     pie_labels = [item["category__name"] or "General" for item in category_breakdown]
     pie_data = [float(item["total"]) for item in category_breakdown]
 
-    # Bar Chart
     seven_days_ago = today - timedelta(days=7)
-    last_7_days_expenses = all_expenses.filter(date__gte=seven_days_ago)
     daily_spending = (
-        last_7_days_expenses.values("date")
+        all_expenses.filter(date__gte=seven_days_ago)
+        .values("date")
         .annotate(total=Sum("amount"))
         .order_by("date")
     )
     bar_labels = [item["date"].strftime("%d %b") for item in daily_spending]
     bar_data = [float(item["total"]) for item in daily_spending]
-
-    # Recent expenses
-    recent_expenses = all_expenses.order_by("-date")[:10]
 
     context = {
         "total_this_month": total_this_month,
@@ -160,38 +147,31 @@ def admin_dashboard(request):
         "total_income_sources": total_income_sources,
         "monthly_budget": budget_amount,
         "budget_percentage": budget_percentage,
-        "recent_expenses": recent_expenses,
+        "recent_expenses": all_expenses.order_by("-date")[:10],
         "pie_labels": json.dumps(pie_labels),
         "pie_data": json.dumps(pie_data),
         "bar_labels": json.dumps(bar_labels),
         "bar_data": json.dumps(bar_data),
     }
-
     return render(request, "expenses/admin_dashboard.html", context)
 
 
-# --- Dashboard View ---
+# --- Home / Dashboard ---
 @login_required
 def home(request):
     user = request.user
-    is_admin = user.is_superuser  # Check if user is admin
+    is_admin = user.is_superuser
     search_query = request.GET.get("search", "").strip()
 
-    # Admin sees all expenses, regular users see only their own
     if is_admin:
-        all_expenses = (
-            Expense.objects.all()
-            .select_related("category", "member__user", "user")
-            .order_by("-date")
-        )
+        all_expenses = Expense.objects.all().select_related(
+            "category", "member__user", "user"
+        ).order_by("-date")
     else:
-        all_expenses = (
-            Expense.objects.filter(user=user)
-            .select_related("category", "member__user")
-            .order_by("-date")
-        )
+        all_expenses = Expense.objects.filter(user=user).select_related(
+            "category", "member__user"
+        ).order_by("-date")
 
-    # --- সার্চ লজিক ---
     converted_date = None
     if search_query:
         for fmt in ("%d %b, %Y", "%d %b %Y", "%Y-%m-%d"):
@@ -203,13 +183,12 @@ def home(request):
             except ValueError:
                 continue
 
-    if search_query:
         query_filter = (
             Q(description__icontains=search_query)
             | Q(category__name__icontains=search_query)
             | Q(member__name__icontains=search_query)
             | Q(member__user__username__icontains=search_query)
-            | Q(user__username__icontains=search_query)  # Admin can search by username
+            | Q(user__username__icontains=search_query)
         )
         if converted_date:
             query_filter |= Q(date=converted_date)
@@ -217,7 +196,6 @@ def home(request):
     else:
         expenses = all_expenses[:10]
 
-    # --- স্ট্যাটাস ক্যালকুলেশন ---
     today = datetime.today()
     current_month_expenses = all_expenses.filter(
         date__year=today.year, date__month=today.month
@@ -227,7 +205,6 @@ def home(request):
     )
     total_all_time = all_expenses.aggregate(Sum("amount"))["amount__sum"] or 0
 
-    # --- Pie Chart ডেটা ---
     category_breakdown = (
         current_month_expenses.values("category__name")
         .annotate(total=Sum("amount"))
@@ -236,18 +213,16 @@ def home(request):
     pie_labels = [item["category__name"] or "General" for item in category_breakdown]
     pie_data = [float(item["total"]) for item in category_breakdown]
 
-    # --- Bar Chart ডেটা (আপনার নতুন যোগ করা অংশ) ---
     seven_days_ago = today - timedelta(days=7)
-    last_7_days_expenses = all_expenses.filter(date__gte=seven_days_ago)
     daily_spending = (
-        last_7_days_expenses.values("date")
+        all_expenses.filter(date__gte=seven_days_ago)
+        .values("date")
         .annotate(total=Sum("amount"))
         .order_by("date")
     )
     bar_labels = [item["date"].strftime("%d %b") for item in daily_spending]
     bar_data = [float(item["total"]) for item in daily_spending]
 
-    # --- ফাইনাল কনটেক্সট (সব ডেটা একসাথে) ---
     context = {
         "expenses": expenses,
         "total_this_month": total_this_month,
@@ -255,11 +230,10 @@ def home(request):
         "total_expenses_count": all_expenses.count(),
         "pie_labels": json.dumps(pie_labels),
         "pie_data": json.dumps(pie_data),
-        "bar_labels": json.dumps(bar_labels),  # নতুন ডেটা
-        "bar_data": json.dumps(bar_data),  # নতুন ডেটা
-        "is_admin": is_admin,  # Tell template if user is admin
+        "bar_labels": json.dumps(bar_labels),
+        "bar_data": json.dumps(bar_data),
+        "is_admin": is_admin,
     }
-
     return render(request, "expenses/home.html", context)
 
 
@@ -267,11 +241,9 @@ def home(request):
 @login_required
 def export_expenses_excel(request):
     search_query = request.GET.get("search", "").strip()
-    expenses = (
-        Expense.objects.filter(user=request.user)
-        .select_related("category", "member")
-        .order_by("-date")
-    )
+    expenses = Expense.objects.filter(user=request.user).select_related(
+        "category", "member"
+    ).order_by("-date")
 
     if search_query:
         query_filter = (
@@ -282,31 +254,29 @@ def export_expenses_excel(request):
         )
         expenses = expenses.filter(query_filter).distinct()
 
-    response = HttpResponse(content_type="application/ms-excel")
-    response["Content-Disposition"] = (
-        f'attachment; filename="Report_{datetime.now().strftime("%Y-%m-%d")}.xls"'
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Date", "Category", "Member", "Description", "Amount"])
+    for obj in expenses:
+        ws.append([
+            obj.date.strftime("%d %b, %Y"),
+            obj.category.name if obj.category else "General",
+            obj.member.name if obj.member else "Self",
+            obj.description or "",
+            float(obj.amount),
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    wb = xlwt.Workbook(encoding="utf-8")
-    ws = wb.add_sheet("Expenses")
-    columns = ["Date", "Category", "Member", "Description", "Amount"]
-
-    header_style = xlwt.XFStyle()
-    header_style.font.bold = True
-    for col_num, column_title in enumerate(columns):
-        ws.write(0, col_num, column_title, header_style)
-
-    for row_num, obj in enumerate(expenses, 1):
-        ws.write(row_num, 0, obj.date.strftime("%d %b, %Y"))
-        ws.write(row_num, 1, obj.category.name if obj.category else "General")
-        ws.write(row_num, 2, obj.member.name if obj.member else "Self")
-        ws.write(row_num, 3, obj.description)
-        ws.write(row_num, 4, float(obj.amount))
-
+    response["Content-Disposition"] = (
+        f'attachment; filename="Report_{datetime.now().strftime("%Y-%m-%d")}.xlsx"'
+    )
     wb.save(response)
     return response
 
 
-# --- CRUD Operations ---
+# --- Expense CRUD ---
 @login_required
 def add_expense(request):
     if request.method == "POST":
@@ -345,13 +315,14 @@ def delete_expense(request, pk):
     return redirect("expenses:home")
 
 
-# --- Category Management (এটি আপনার এররটি ঠিক করবে) ---
+# --- Category Management ---
 @login_required
 def add_category(request):
     if request.method == "POST":
-        name = request.POST.get("name")
-        ExpenseCategory.objects.create(name=name)
-        messages.success(request, "Category added!")
+        name = request.POST.get("name", "").strip()
+        if name:
+            ExpenseCategory.objects.create(name=name)
+            messages.success(request, "Category added!")
         return redirect("expenses:add_category")
     return render(
         request,
@@ -364,9 +335,11 @@ def add_category(request):
 def edit_category(request, pk):
     category = get_object_or_404(ExpenseCategory, pk=pk)
     if request.method == "POST":
-        category.name = request.POST.get("name")
-        category.save()
-        messages.success(request, "Category updated!")
+        name = request.POST.get("name", "").strip()
+        if name:
+            category.name = name
+            category.save()
+            messages.success(request, "Category updated!")
         return redirect("expenses:add_category")
     return render(request, "expenses/edit_category.html", {"category": category})
 
@@ -380,9 +353,6 @@ def delete_category(request, pk):
 # --- Member Management ---
 @login_required
 def add_member(request):
-    # আপনার মডেল থেকে রোলের অপশনগুলো নিয়ে আসা
-    roles = FamilyMember.ROLE_CHOICES  # আপনার মডেলে যদি ROLE_CHOICES থাকে
-
     if request.method == "POST":
         form = FamilyMemberForm(request.POST, request.FILES)
         if form.is_valid():
@@ -393,12 +363,10 @@ def add_member(request):
             return redirect("expenses:member_list")
     else:
         form = FamilyMemberForm()
-
-    # context-এ roles অবশ্যই পাঠাতে হবে
     return render(
         request,
         "expenses/add_member.html",
-        {"form": form, "roles": roles},  # contex এই লাইনটি আপনার আগে ছিল না
+        {"form": form, "roles": FamilyMember.ROLE_CHOICES},
     )
 
 
@@ -410,23 +378,12 @@ def member_list(request):
     if query:
         members = members.filter(name__icontains=query)
 
-    # এক্সেল এক্সপোর্ট লজিক
     if request.GET.get("export") == "1":
-        data = [
-            {
-                "Name": m.name,
-                "Phone": m.phone_number,
-                "Role": m.role,
-                "Income Source": m.income_source,
-                "Salary": m.salary,
-            }
-            for m in members
-        ]
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.append(["Name", "Phone", "Role", "Income Source", "Salary"])
-        for row in data:
-            ws.append(list(row.values()))
+        for m in members:
+            ws.append([m.name, m.phone_number, m.role, m.income_source, float(m.salary or 0)])
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -437,14 +394,9 @@ def member_list(request):
     return render(request, "expenses/member_list.html", {"members": members})
 
 
-# 'member_id' এর বদলে 'pk' লিখুন
 @login_required
 def edit_member(request, pk):
-    # এখানেও member_id এর বদলে pk লিখুন
-    member = get_object_or_404(FamilyMember, id=pk)
-
-    roles = FamilyMember.ROLE_CHOICES
-
+    member = get_object_or_404(FamilyMember, id=pk, user=request.user)
     if request.method == "POST":
         form = FamilyMemberForm(request.POST, request.FILES, instance=member)
         if form.is_valid():
@@ -453,11 +405,10 @@ def edit_member(request, pk):
             return redirect("expenses:member_list")
     else:
         form = FamilyMemberForm(instance=member)
-
     return render(
         request,
         "expenses/add_member.html",
-        {"form": form, "member": member, "edit_mode": True, "roles": roles},
+        {"form": form, "member": member, "edit_mode": True, "roles": FamilyMember.ROLE_CHOICES},
     )
 
 
@@ -467,15 +418,13 @@ def delete_member(request, pk):
     return redirect("expenses:member_list")
 
 
-# --- Authentication & Others ---
+# --- Authentication ---
 def register_view(request):
     if request.method == "POST":
-        u, e, p1, p2 = (
-            request.POST.get("username"),
-            request.POST.get("email"),
-            request.POST.get("password"),
-            request.POST.get("password_confirm"),
-        )
+        u = request.POST.get("username")
+        e = request.POST.get("email")
+        p1 = request.POST.get("password")
+        p2 = request.POST.get("password_confirm")
         if p1 == p2 and not User.objects.filter(username=u).exists():
             user = User.objects.create_user(username=u, email=e, password=p1)
             user.is_staff = user.is_superuser = True
@@ -486,70 +435,50 @@ def register_view(request):
 
 def login_view(request):
     if request.method == "POST":
-        u, p = request.POST.get("username"), request.POST.get("password")
+        u = request.POST.get("username")
+        p = request.POST.get("password")
         user = authenticate(username=u, password=p)
         if user:
             login(request, user)
             return redirect("expenses:home")
-        else:
-            # Invalid credentials - show error
-            messages.error(request, "Invalid username or password!")
-            return render(
-                request, "login.html", {"error": "Invalid username or password!"}
-            )
+        messages.error(request, "Invalid username or password!")
+        return render(request, "login.html", {"error": "Invalid username or password!"})
     return render(request, "login.html")
 
 
-# Admin Registration View
 def admin_register(request):
-    """Registration view for creating admin users - Limited to 3 admins"""
-    admin_count = User.objects.filter(is_superuser=True).count()
+    """Admin registration — limited to MAX_ADMINS superusers."""
+    MAX_ADMINS = int(os.environ.get("MAX_ADMINS", 3))
+    ADMIN_SECRET = os.environ.get("ADMIN_SECRET_KEY", "")
 
-    if admin_count >= 3:
-        messages.error(
-            request, "Maximum admin limit reached (3). Please contact existing admin."
-        )
+    if User.objects.filter(is_superuser=True).count() >= MAX_ADMINS:
+        messages.error(request, f"Maximum admin limit ({MAX_ADMINS}) reached.")
         return redirect("expenses:login")
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        email = request.POST.get("email")
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
-        secret_key = request.POST.get("secret_key")
+        secret_key = request.POST.get("secret_key", "")
 
-        # Validation
         if password != confirm_password:
-            return render(
-                request, "register.html", {"error": "Passwords do not match!"}
-            )
-
+            return render(request, "register.html", {"error": "Passwords do not match!"})
         if User.objects.filter(username=username).exists():
-            return render(
-                request, "register.html", {"error": "Username already exists!"}
-            )
-
+            return render(request, "register.html", {"error": "Username already exists!"})
         if User.objects.filter(email=email).exists():
             return render(request, "register.html", {"error": "Email already exists!"})
+        if not ADMIN_SECRET or secret_key != ADMIN_SECRET:
+            return render(request, "register.html", {"error": "Invalid secret key!"})
 
-        # Check secret key (you can change this code)
-        if secret_key != "admin123":
-            return render(
-                request,
-                "register.html",
-                {"error": "Invalid secret key! Contact admin for the code."},
-            )
-
-        # Create admin user
-        user = User.objects.create_user(
+        User.objects.create_user(
             username=username,
             email=email,
             password=password,
-            is_superuser=True,  # Make them admin
+            is_superuser=True,
             is_staff=True,
         )
-
-        messages.success(request, "Admin account created successfully! Please login.")
+        messages.success(request, "Admin account created! Please login.")
         return redirect("expenses:login")
 
     return render(request, "register.html")
@@ -560,64 +489,47 @@ def logout_view(request):
     return redirect("expenses:login")
 
 
-# Admin Login View
 def admin_login_view(request):
-    """Separate login for admin users"""
     if request.method == "POST":
-        u, p = request.POST.get("username"), request.POST.get("password")
+        u = request.POST.get("username")
+        p = request.POST.get("password")
         user = authenticate(username=u, password=p)
-
         if user:
             if user.is_superuser:
                 login(request, user)
                 return redirect("expenses:admin_dashboard")
-            else:
-                return render(
-                    request,
-                    "login_admin.html",
-                    {"error": "Not an admin account! Use user login."},
-                )
-        else:
             return render(
-                request, "login_admin.html", {"error": "Invalid username or password!"}
+                request,
+                "login_admin.html",
+                {"error": "Not an admin account! Use user login."},
             )
+        return render(
+            request, "login_admin.html", {"error": "Invalid username or password!"}
+        )
     return render(request, "login_admin.html")
 
 
-# User Registration View
 def user_register(request):
-    """Registration view for regular users (not admins)"""
     if request.method == "POST":
-        username = request.POST.get("username")
-        email = request.POST.get("email")
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
 
-        # Validation
         if password != confirm_password:
-            return render(
-                request, "register_user.html", {"error": "Passwords do not match!"}
-            )
-
+            return render(request, "register_user.html", {"error": "Passwords do not match!"})
         if User.objects.filter(username=username).exists():
-            return render(
-                request, "register_user.html", {"error": "Username already exists!"}
-            )
-
+            return render(request, "register_user.html", {"error": "Username already exists!"})
         if User.objects.filter(email=email).exists():
-            return render(
-                request, "register_user.html", {"error": "Email already exists!"}
-            )
+            return render(request, "register_user.html", {"error": "Email already exists!"})
 
-        # Create regular user (NOT admin)
-        user = User.objects.create_user(
+        User.objects.create_user(
             username=username,
             email=email,
             password=password,
             is_superuser=False,
             is_staff=False,
         )
-
         messages.success(request, "Account created successfully! Please login.")
         return redirect("expenses:login")
 
@@ -639,16 +551,13 @@ def set_budget(request):
 
 @login_required
 def view_expenses(request):
-    # ১. সব খরচ এবং ক্যাটাগরি নিয়ে আসা (লগইন করা ইউজারের জন্য)
     expenses = Expense.objects.filter(user=request.user).order_by("-date")
     categories = ExpenseCategory.objects.all()
 
-    # ২. ফিল্টারিং লজিক (URL থেকে ডাটা নেওয়া)
     category_id = request.GET.get("category")
     from_date = request.GET.get("from_date")
     to_date = request.GET.get("to_date")
 
-    # ফিল্টার অ্যাপ্লাই করা (এখানে ডাবল আন্ডারস্কোর __ ব্যবহার করা হয়েছে)
     if category_id:
         expenses = expenses.filter(category_id=category_id)
     if from_date:
@@ -656,23 +565,17 @@ def view_expenses(request):
     if to_date:
         expenses = expenses.filter(date__lte=to_date)
 
-    # ৩. এক্সেল এক্সপোর্ট লজিক (যদি ইউজার ডাউনলোড বাটনে ক্লিক করে)
     if request.GET.get("export") == "1":
-        data = [
-            {
-                "Date": e.date.strftime("%d %b, %Y"),
-                "Category": e.category.name if e.category else "General",
-                "Description": e.description,
-                "Amount": float(e.amount),
-            }
-            for e in expenses
-        ]
-
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.append(["Date", "Category", "Description", "Amount"])
-        for row in data:
-            ws.append(list(row.values()))
+        for e in expenses:
+            ws.append([
+                e.date.strftime("%d %b, %Y"),
+                e.category.name if e.category else "General",
+                e.description or "",
+                float(e.amount),
+            ])
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -680,10 +583,7 @@ def view_expenses(request):
         wb.save(response)
         return response
 
-    # ৪. টোটাল হিসাব করা
     total_amount = expenses.aggregate(Sum("amount"))["amount__sum"] or 0
-
-    # ৫. টেমপ্লেটে ডাটা পাঠানো
     return render(
         request,
         "expenses/view_expenses.html",

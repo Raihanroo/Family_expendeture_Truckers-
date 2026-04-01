@@ -40,9 +40,6 @@
     }
   ],
   "env": {
-    "DJANGO_SETTINGS_MODULE": "core.settings",
-    "SECRET_KEY": "django-insecure-uj*1wsjabg2j64i$5wi1df8unqj3kz9s#vhd6t36%*mm1_3-59",
-    "DEBUG": "False",
-    "ALLOWED_HOSTS": "*.vercel.app"
+    "DJANGO_SETTINGS_MODULE": "core.settings"
   }
 }

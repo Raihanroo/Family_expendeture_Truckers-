@@ -36,7 +36,6 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     ".vercel.app",
-    "*",
 ]
 
 
@@ -169,9 +168,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
 
-CSRF_COOKIE_SECURE = True  # Development এ False, Production এ True
-CSRF_COOKIE_HTTPONLY = False  # AJAX এর জন্য False রাখুন
-SESSION_COOKIE_SECURE = True  # Development এ False, Production এ True
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False  # Keep False for AJAX
+SESSION_COOKIE_SECURE = not DEBUG
 
 
 # ==================== JSON API Settings ====================
