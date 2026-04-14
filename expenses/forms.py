@@ -1,3 +1,7 @@
+"""
+Family Expenditure Management System - Forms
+Django forms for user input validation and rendering
+"""
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -5,11 +9,10 @@ from .models import Expense, ExpenseCategory, Budget, FamilyMember
 
 
 class ExpenseForm(forms.ModelForm):
-    """খরচ ফর্ম"""
+    """Form for creating and editing expenses"""
 
     class Meta:
         model = Expense
-        # এখানে member, is_recurring, frequency, recurring_end_date যোগ করা হয়েছে
         fields = [
             "date",
             "category",
@@ -24,9 +27,7 @@ class ExpenseForm(forms.ModelForm):
         widgets = {
             "date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "category": forms.Select(attrs={"class": "form-control"}),
-            "member": forms.Select(
-                attrs={"class": "form-control"}
-            ),  # নতুন যোগ করা হয়েছে
+            "member": forms.Select(attrs={"class": "form-control"}),
             "amount": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -39,10 +40,9 @@ class ExpenseForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "rows": 3,
-                    "placeholder": "খরচের বর্ণনা লিখুন",
+                    "placeholder": "Expense description",
                 }
             ),
-            # রিকারিং খরচের জন্য নতুন উইজেট
             "is_recurring": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "frequency": forms.Select(attrs={"class": "form-control"}),
             "recurring_end_date": forms.DateInput(
@@ -51,27 +51,30 @@ class ExpenseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Get user from kwargs
         super().__init__(*args, **kwargs)
         self.fields["description"].required = False
         self.fields["category"].queryset = ExpenseCategory.objects.all()
-        self.fields["category"].empty_label = "-- Category Select করুন --"
-
-        # মেম্বার ড্রপডাউন সেটআপ
-        self.fields["member"].queryset = FamilyMember.objects.all()
-        self.fields["member"].empty_label = "-- মেম্বার সিলেক্ট করুন --"
-
-        # রিকারিং অপশনগুলো শুরুতে বাধ্যতামূলক নয়
+        self.fields["category"].empty_label = "-- Select Category --"
+        
+        # Filter members by user
+        if user:
+            self.fields["member"].queryset = FamilyMember.objects.filter(user=user)
+        else:
+            self.fields["member"].queryset = FamilyMember.objects.all()
+        
+        self.fields["member"].empty_label = "-- Select Member --"
         self.fields["frequency"].required = False
         self.fields["recurring_end_date"].required = False
 
 
 class UserCreationFormCustom(UserCreationForm):
-    """ব্যবহারকারী তৈরির ফর্ম"""
+    """Custom user registration form"""
 
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(
-            attrs={"class": "form-control", "placeholder": "ইমেইল ঠিকানা"}
+            attrs={"class": "form-control", "placeholder": "Email address"}
         ),
     )
 
@@ -80,21 +83,23 @@ class UserCreationFormCustom(UserCreationForm):
         fields = ("username", "email", "password1", "password2")
         widgets = {
             "username": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "ইউজারনেম"}
+                attrs={"class": "form-control", "placeholder": "Username"}
             ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["password1"].widget.attrs.update(
-            {"class": "form-control", "placeholder": "পাসওয়ার্ড"}
+            {"class": "form-control", "placeholder": "Password"}
         )
         self.fields["password2"].widget.attrs.update(
-            {"class": "form-control", "placeholder": "পাসওয়ার্ড নিশ্চিত করুন"}
+            {"class": "form-control", "placeholder": "Confirm password"}
         )
 
 
 class BudgetForm(forms.ModelForm):
+    """Form for setting monthly budget"""
+    
     class Meta:
         model = Budget
         fields = ["monthly_budget"]
@@ -111,43 +116,44 @@ class BudgetForm(forms.ModelForm):
 
 
 class FamilyMemberForm(forms.ModelForm):
+    """Form for creating and editing family members"""
+    
     class Meta:
         model = FamilyMember
-        # এখানে 'mother_name' এবং 'address' যোগ করা হয়েছে
         fields = [
             "name",
             "father_name",
-            "mother_name",  # নতুন যুক্ত
+            "mother_name",
             "phone_number",
             "income_source",
             "salary",
-            "address",  # নতুন যুক্ত
+            "address",
             "role",
             "photo",
         ]
         widgets = {
             "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "মেম্বারের পূর্ণ নাম"}
+                attrs={"class": "form-control", "placeholder": "Full name"}
             ),
             "father_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "বাবার নাম"}
+                attrs={"class": "form-control", "placeholder": "Father's name"}
             ),
-            "mother_name": forms.TextInput(  # নতুন যুক্ত
-                attrs={"class": "form-control", "placeholder": "মায়ের নাম"}
+            "mother_name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Mother's name"}
             ),
             "phone_number": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "ফোন নম্বর"}
+                attrs={"class": "form-control", "placeholder": "Phone number"}
             ),
             "income_source": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "আয়ের উৎস"}
+                attrs={"class": "form-control", "placeholder": "Income source"}
             ),
             "salary": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "মাসিক আয়"}
+                attrs={"class": "form-control", "placeholder": "Monthly income"}
             ),
-            "address": forms.Textarea(  # নতুন যুক্ত
+            "address": forms.Textarea(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "সম্পূর্ণ ঠিকানা",
+                    "placeholder": "Full address",
                     "rows": 3,
                 }
             ),

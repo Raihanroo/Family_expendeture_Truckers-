@@ -1,20 +1,57 @@
-# Virtual environment
-venv/
-
-# Python cache
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
 
-# Database
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Django
+*.log
 db.sqlite3
+db.sqlite3-journal
 db.mysql
 db
-# Environment variables
-.env
+/media
+/staticfiles
+/static
 
-# Large files
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Large Files
 *.zip
 *.tar.gz
+*.rar
 
-# Media files (optional - depends on your needs)
-media/
+# Temporary Files
+*.tmp
+*.bak

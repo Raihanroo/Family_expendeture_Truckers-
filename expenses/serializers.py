@@ -1,32 +1,30 @@
+"""
+Family Expenditure Management System - Serializers
+Converts database models to JSON format for REST API
+"""
 from rest_framework import serializers
-
-# DRF (Django REST Framework) থেকে serializers import করছি
-# serializers হলো Database data কে JSON এ convert করার tool
-
 from .models import FamilyMember, IncomeSource, ExpenseCategory, Expenditure, Expense
-
-# আমাদের বানানো 4টা model import করছি
 
 
 class IncomeSourceSerializer(serializers.ModelSerializer):
-    # IncomeSource model এর জন্য serializer
-    # যেমন: {"id": 1, "name": "চাকরি"} এই format এ data আসবে
+    """Serializer for IncomeSource model"""
+    
     class Meta:
-        model = IncomeSource  # কোন model এর জন্য
-        fields = "__all__"  # সব field JSON এ আসবে
+        model = IncomeSource
+        fields = "__all__"
 
 
 class ExpenseCategorySerializer(serializers.ModelSerializer):
-    # MemberCategory model এর জন্য serializer
-    # যেমন: {"id": 1, "name": "খাবার"} এই format এ data আসবে
+    """Serializer for ExpenseCategory model"""
+    
     class Meta:
-        model = ExpenseCategory  # কোন model এর জন্য
-        fields = "__all__"  # সব field JSON এ আসবে
+        model = ExpenseCategory
+        fields = "__all__"
 
 
 class FamilyMemberSerializer(serializers.ModelSerializer):
-    # income_source is a CharField (not a ForeignKey), so we expose it directly.
-
+    """Serializer for FamilyMember model with all fields"""
+    
     class Meta:
         model = FamilyMember
         fields = [
@@ -45,36 +43,29 @@ class FamilyMemberSerializer(serializers.ModelSerializer):
 
 
 class ExpenditureSerializer(serializers.ModelSerializer):
-    # Expenditure model এর জন্য serializer
-
-    member_name = serializers.CharField(
-        source="member.name",
-        read_only=True,
-        # Member এর ID না, নাম দেখাবে (যেমন: "রাইহান")
-    )
-    category_name = serializers.CharField(
-        source="category.name",
-        read_only=True,
-        # Category এর ID না, নাম দেখাবে (যেমন: "খাবার")
-    )
+    """Serializer for Expenditure model with related field names"""
+    
+    member_name = serializers.CharField(source="member.name", read_only=True)
+    category_name = serializers.CharField(source="category.name", read_only=True)
 
     class Meta:
         model = Expenditure
         fields = [
-            "id",  # Expenditure এর unique ID
-            "member",  # Member এর ID
-            "member_name",  # Member এর নাম (যেমন: "রাইহান")
-            "category",  # Category এর ID
-            "category_name",  # Category এর নাম (যেমন: "খাবার")
-            "amount",  # কত টাকা খরচ হয়েছে
-            "description",  # খরচের বিবরণ
-            "date",  # কোন তারিখে খরচ হয়েছে
-            "created_at",  # কখন record করা হয়েছে
+            "id",
+            "member",
+            "member_name",
+            "category",
+            "category_name",
+            "amount",
+            "description",
+            "date",
+            "created_at",
         ]
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
-    # Expense model এর জন্য serializer
+    """Serializer for Expense model"""
+    
     class Meta:
         model = Expense
         fields = "__all__"

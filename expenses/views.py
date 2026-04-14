@@ -1,3 +1,7 @@
+"""
+Family Expenditure Management System - Views
+Handles all web views and API endpoints for expense tracking
+"""
 import json
 import os
 import openpyxl
@@ -11,7 +15,6 @@ from django.contrib.auth.models import User
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-
 from rest_framework import permissions, viewsets
 
 from .forms import BudgetForm, ExpenseForm, FamilyMemberForm
@@ -31,13 +34,6 @@ from .serializers import (
     IncomeSourceSerializer,
 )
 
-
-# --- API Documentation View ---
-def api_docs(request):
-    docs_path = os.path.join(settings.BASE_DIR, "API_Documentation.html")
-    with open(docs_path, "r", encoding="utf-8") as f:
-        content = f.read()
-    return HttpResponse(content, content_type="text/html")
 
 
 # --- API ViewSets ---
@@ -83,11 +79,13 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 # --- Admin Dashboard ---
 @login_required
 def admin_dashboard(request):
+    """Admin dashboard with system-wide statistics and charts"""
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admin only.")
         return redirect("expenses:home")
 
     today = datetime.today()
+    chart_period = request.GET.get("period", "7days")  # Default to 7 days
     all_expenses = Expense.objects.all().select_related("category", "member__user")
 
     total_this_month = (
@@ -125,14 +123,39 @@ def admin_dashboard(request):
     pie_labels = [item["category__name"] or "General" for item in category_breakdown]
     pie_data = [float(item["total"]) for item in category_breakdown]
 
-    seven_days_ago = today - timedelta(days=7)
+    # Dynamic chart period calculation
+    if chart_period == "7days":
+        start_date = today - timedelta(days=7)
+        date_format = "%d %b"
+        chart_title = "Last 7 Days"
+    elif chart_period == "30days":
+        start_date = today - timedelta(days=30)
+        date_format = "%d %b"
+        chart_title = "Last 30 Days"
+    elif chart_period == "3months":
+        start_date = today - timedelta(days=90)
+        date_format = "%d %b"
+        chart_title = "Last 3 Months"
+    elif chart_period == "6months":
+        start_date = today - timedelta(days=180)
+        date_format = "%b %Y"
+        chart_title = "Last 6 Months"
+    elif chart_period == "year":
+        start_date = today - timedelta(days=365)
+        date_format = "%b %Y"
+        chart_title = "Last Year"
+    else:
+        start_date = today - timedelta(days=7)
+        date_format = "%d %b"
+        chart_title = "Last 7 Days"
+
     daily_spending = (
-        all_expenses.filter(date__gte=seven_days_ago)
+        all_expenses.filter(date__gte=start_date)
         .values("date")
         .annotate(total=Sum("amount"))
         .order_by("date")
     )
-    bar_labels = [item["date"].strftime("%d %b") for item in daily_spending]
+    bar_labels = [item["date"].strftime(date_format) for item in daily_spending]
     bar_data = [float(item["total"]) for item in daily_spending]
 
     context = {
@@ -152,6 +175,8 @@ def admin_dashboard(request):
         "pie_data": json.dumps(pie_data),
         "bar_labels": json.dumps(bar_labels),
         "bar_data": json.dumps(bar_data),
+        "chart_period": chart_period,
+        "chart_title": chart_title,
     }
     return render(request, "expenses/admin_dashboard.html", context)
 
@@ -159,18 +184,18 @@ def admin_dashboard(request):
 # --- Home / Dashboard ---
 @login_required
 def home(request):
+    """
+    User dashboard showing only their own expenses.
+    Admin users should use admin_dashboard for system-wide view.
+    """
     user = request.user
-    is_admin = user.is_superuser
     search_query = request.GET.get("search", "").strip()
+    chart_period = request.GET.get("period", "7days")  # Default to 7 days
 
-    if is_admin:
-        all_expenses = Expense.objects.all().select_related(
-            "category", "member__user", "user"
-        ).order_by("-date")
-    else:
-        all_expenses = Expense.objects.filter(user=user).select_related(
-            "category", "member__user"
-        ).order_by("-date")
+    # Each user sees only their own expenses
+    all_expenses = Expense.objects.filter(user=user).select_related(
+        "category", "member"
+    ).order_by("-date")
 
     converted_date = None
     if search_query:
@@ -187,8 +212,6 @@ def home(request):
             Q(description__icontains=search_query)
             | Q(category__name__icontains=search_query)
             | Q(member__name__icontains=search_query)
-            | Q(member__user__username__icontains=search_query)
-            | Q(user__username__icontains=search_query)
         )
         if converted_date:
             query_filter |= Q(date=converted_date)
@@ -213,14 +236,39 @@ def home(request):
     pie_labels = [item["category__name"] or "General" for item in category_breakdown]
     pie_data = [float(item["total"]) for item in category_breakdown]
 
-    seven_days_ago = today - timedelta(days=7)
+    # Dynamic chart period calculation
+    if chart_period == "7days":
+        start_date = today - timedelta(days=7)
+        date_format = "%d %b"
+        chart_title = "Last 7 Days"
+    elif chart_period == "30days":
+        start_date = today - timedelta(days=30)
+        date_format = "%d %b"
+        chart_title = "Last 30 Days"
+    elif chart_period == "3months":
+        start_date = today - timedelta(days=90)
+        date_format = "%d %b"
+        chart_title = "Last 3 Months"
+    elif chart_period == "6months":
+        start_date = today - timedelta(days=180)
+        date_format = "%b %Y"
+        chart_title = "Last 6 Months"
+    elif chart_period == "year":
+        start_date = today - timedelta(days=365)
+        date_format = "%b %Y"
+        chart_title = "Last Year"
+    else:
+        start_date = today - timedelta(days=7)
+        date_format = "%d %b"
+        chart_title = "Last 7 Days"
+
     daily_spending = (
-        all_expenses.filter(date__gte=seven_days_ago)
+        all_expenses.filter(date__gte=start_date)
         .values("date")
         .annotate(total=Sum("amount"))
         .order_by("date")
     )
-    bar_labels = [item["date"].strftime("%d %b") for item in daily_spending]
+    bar_labels = [item["date"].strftime(date_format) for item in daily_spending]
     bar_data = [float(item["total"]) for item in daily_spending]
 
     context = {
@@ -232,7 +280,9 @@ def home(request):
         "pie_data": json.dumps(pie_data),
         "bar_labels": json.dumps(bar_labels),
         "bar_data": json.dumps(bar_data),
-        "is_admin": is_admin,
+        "chart_period": chart_period,
+        "chart_title": chart_title,
+        "is_admin": user.is_superuser,
     }
     return render(request, "expenses/home.html", context)
 
@@ -279,8 +329,9 @@ def export_expenses_excel(request):
 # --- Expense CRUD ---
 @login_required
 def add_expense(request):
+    """Add a new expense - member dropdown shows only user's own members"""
     if request.method == "POST":
-        form = ExpenseForm(request.POST)
+        form = ExpenseForm(request.POST, user=request.user)
         if form.is_valid():
             expense = form.save(commit=False)
             expense.user = request.user
@@ -288,21 +339,27 @@ def add_expense(request):
             messages.success(request, "Expense added successfully!")
             return redirect("expenses:home")
     else:
-        form = ExpenseForm()
+        form = ExpenseForm(user=request.user)
     return render(request, "expenses/add_expense.html", {"form": form})
 
 
 @login_required
 def edit_expense(request, pk):
-    expense = get_object_or_404(Expense, pk=pk, user=request.user)
+    """Edit an existing expense - users can only edit their own expenses"""
+    try:
+        expense = get_object_or_404(Expense, pk=pk, user=request.user)
+    except:
+        messages.error(request, "Expense not found or you don't have permission to edit it!")
+        return redirect("expenses:home")
+    
     if request.method == "POST":
-        form = ExpenseForm(request.POST, instance=expense)
+        form = ExpenseForm(request.POST, instance=expense, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Expense updated successfully!")
             return redirect("expenses:home")
     else:
-        form = ExpenseForm(instance=expense)
+        form = ExpenseForm(instance=expense, user=request.user)
     return render(
         request, "expenses/add_expense.html", {"form": form, "edit_mode": True}
     )
@@ -310,8 +367,13 @@ def edit_expense(request, pk):
 
 @login_required
 def delete_expense(request, pk):
-    get_object_or_404(Expense, pk=pk, user=request.user).delete()
-    messages.success(request, "Expense deleted!")
+    """Delete an expense - users can only delete their own expenses"""
+    try:
+        expense = get_object_or_404(Expense, pk=pk, user=request.user)
+        expense.delete()
+        messages.success(request, "Expense deleted successfully!")
+    except:
+        messages.error(request, "Expense not found or you don't have permission to delete it!")
     return redirect("expenses:home")
 
 
@@ -372,18 +434,38 @@ def add_member(request):
 
 @login_required
 def member_list(request):
-    query = request.GET.get("q", "")
-    members = FamilyMember.objects.filter(user=request.user)
+    """List all family members - admins see all, regular users see only their own"""
+    query = request.GET.get("q", "").strip()
+    
+    # Admin can see all members, regular users see only their own
+    if request.user.is_superuser:
+        members = FamilyMember.objects.all()
+    else:
+        members = FamilyMember.objects.filter(user=request.user)
 
     if query:
-        members = members.filter(name__icontains=query)
+        members = members.filter(
+            Q(name__icontains=query) |
+            Q(phone_number__icontains=query) |
+            Q(father_name__icontains=query) |
+            Q(mother_name__icontains=query) |
+            Q(address__icontains=query) |
+            Q(income_source__icontains=query)
+        )
 
     if request.GET.get("export") == "1":
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(["Name", "Phone", "Role", "Income Source", "Salary"])
+        ws.append(["Name", "Phone", "Role", "Income Source", "Salary", "Owner"])
         for m in members:
-            ws.append([m.name, m.phone_number, m.role, m.income_source, float(m.salary or 0)])
+            ws.append([
+                m.name, 
+                m.phone_number, 
+                m.role, 
+                m.income_source, 
+                float(m.salary or 0),
+                m.user.username
+            ])
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -391,12 +473,22 @@ def member_list(request):
         wb.save(response)
         return response
 
-    return render(request, "expenses/member_list.html", {"members": members})
+    return render(request, "expenses/member_list.html", {
+        "members": members, 
+        "search_query": query,
+        "is_admin": request.user.is_superuser
+    })
 
 
 @login_required
 def edit_member(request, pk):
-    member = get_object_or_404(FamilyMember, id=pk, user=request.user)
+    """Edit family member - admins can edit any member, users can edit only their own"""
+    # Admin can edit any member, regular users can edit only their own
+    if request.user.is_superuser:
+        member = get_object_or_404(FamilyMember, id=pk)
+    else:
+        member = get_object_or_404(FamilyMember, id=pk, user=request.user)
+    
     if request.method == "POST":
         form = FamilyMemberForm(request.POST, request.FILES, instance=member)
         if form.is_valid():
@@ -414,7 +506,16 @@ def edit_member(request, pk):
 
 @login_required
 def delete_member(request, pk):
-    get_object_or_404(FamilyMember, id=pk, user=request.user).delete()
+    """Delete family member - admins can delete any member, users can delete only their own"""
+    try:
+        if request.user.is_superuser:
+            member = get_object_or_404(FamilyMember, id=pk)
+        else:
+            member = get_object_or_404(FamilyMember, id=pk, user=request.user)
+        member.delete()
+        messages.success(request, "Member deleted successfully!")
+    except:
+        messages.error(request, "Member not found or you don't have permission!")
     return redirect("expenses:member_list")
 
 
@@ -551,31 +652,68 @@ def set_budget(request):
 
 @login_required
 def view_expenses(request):
-    expenses = Expense.objects.filter(user=request.user).order_by("-date")
-    categories = ExpenseCategory.objects.all()
-
+    """
+    View all expenses with filtering options.
+    Admin users see all expenses, regular users see only their own.
+    Supports filtering by category, date range, time period, and user (admin only).
+    """
+    # Get filter parameters
+    filter_type = request.GET.get("filter", "all")  # all, this_month, today
     category_id = request.GET.get("category")
     from_date = request.GET.get("from_date")
     to_date = request.GET.get("to_date")
-
+    user_id = request.GET.get("user")  # Admin can filter by user
+    
+    # Base queryset - admin sees all, users see only their own
+    if request.user.is_superuser:
+        expenses = Expense.objects.all().select_related("category", "member", "user").order_by("-date")
+    else:
+        expenses = Expense.objects.filter(user=request.user).select_related("category", "member").order_by("-date")
+    
+    # Apply user filter (admin only)
+    if request.user.is_superuser and user_id:
+        expenses = expenses.filter(user_id=user_id)
+    
+    # Apply time-based filters
+    today = datetime.today()
+    if filter_type == "this_month":
+        expenses = expenses.filter(date__year=today.year, date__month=today.month)
+    elif filter_type == "today":
+        expenses = expenses.filter(date=today.date())
+    
+    # Apply category filter
     if category_id:
         expenses = expenses.filter(category_id=category_id)
+    
+    # Apply date range filters
     if from_date:
         expenses = expenses.filter(date__gte=from_date)
     if to_date:
         expenses = expenses.filter(date__lte=to_date)
 
+    # Excel export
     if request.GET.get("export") == "1":
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(["Date", "Category", "Description", "Amount"])
-        for e in expenses:
-            ws.append([
-                e.date.strftime("%d %b, %Y"),
-                e.category.name if e.category else "General",
-                e.description or "",
-                float(e.amount),
-            ])
+        if request.user.is_superuser:
+            ws.append(["Date", "User", "Category", "Description", "Amount"])
+            for e in expenses:
+                ws.append([
+                    e.date.strftime("%d %b, %Y"),
+                    e.user.username,
+                    e.category.name if e.category else "General",
+                    e.description or "",
+                    float(e.amount),
+                ])
+        else:
+            ws.append(["Date", "Category", "Description", "Amount"])
+            for e in expenses:
+                ws.append([
+                    e.date.strftime("%d %b, %Y"),
+                    e.category.name if e.category else "General",
+                    e.description or "",
+                    float(e.amount),
+                ])
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -583,12 +721,27 @@ def view_expenses(request):
         wb.save(response)
         return response
 
+    # Calculate totals
     total_amount = expenses.aggregate(Sum("amount"))["amount__sum"] or 0
-    return render(
-        request,
-        "expenses/view_expenses.html",
-        {"expenses": expenses, "categories": categories, "total_amount": total_amount},
-    )
+    total_records = expenses.count()
+    
+    categories = ExpenseCategory.objects.all()
+    
+    # Get all users for admin filter
+    from django.contrib.auth.models import User
+    all_users = User.objects.all().order_by('username') if request.user.is_superuser else []
+    
+    context = {
+        "expenses": expenses,
+        "categories": categories,
+        "total_amount": total_amount,
+        "total_records": total_records,
+        "filter_type": filter_type,
+        "is_admin": request.user.is_superuser,
+        "all_users": all_users,
+    }
+    
+    return render(request, "expenses/view_expenses.html", context)
 
 
 @login_required
@@ -611,3 +764,48 @@ def expense_stats(request):
         "current_month": today.strftime("%B %Y"),
     }
     return render(request, "expenses/stats.html", context)
+
+
+# --- User Management (Admin Only) ---
+@login_required
+def manage_users(request):
+    """Admin can view and manage all users"""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Admin only.")
+        return redirect("expenses:home")
+    
+    from django.contrib.auth.models import User
+    users = User.objects.all().order_by('-date_joined')
+    
+    context = {
+        'users': users,
+    }
+    return render(request, 'expenses/manage_users.html', context)
+
+
+@login_required
+def reset_user_password(request, user_id):
+    """Admin can reset any user's password"""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Admin only.")
+        return redirect("expenses:home")
+    
+    from django.contrib.auth.models import User
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == "POST":
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if new_password and new_password == confirm_password:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, f"Password reset successful for user: {user.username}")
+            return redirect("expenses:manage_users")
+        else:
+            messages.error(request, "Passwords do not match!")
+    
+    context = {
+        'user_to_reset': user,
+    }
+    return render(request, 'expenses/reset_password.html', context)
