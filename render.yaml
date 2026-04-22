@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: family-expense-tracker
+    env: python
+    region: singapore
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn core.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: ADMIN_SECRET_KEY
+        value: change-this-to-a-strong-secret
+      - key: MAX_ADMINS
+        value: 3
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dddtlryzz
+      - key: CLOUDINARY_API_KEY
+        value: 644793419322761
+      - key: CLOUDINARY_API_SECRET
+        value: TwOrDwetfORmUB3JuIWExuQJkdM
+      - key: DATABASE_URL
+        fromDatabase:
+          name: family-expense-db
+          property: connectionString
+
+databases:
+  - name: family-expense-db
+    plan: free
+    databaseName: family_expense
+    user: family_expense_user
