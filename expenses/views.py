@@ -769,13 +769,14 @@ def expense_stats(request):
 # --- User Management (Admin Only) ---
 @login_required
 def manage_users(request):
-    """Admin can view and manage all users"""
+    """Admin can view and manage regular users only (not other admins)"""
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admin only.")
         return redirect("expenses:home")
     
     from django.contrib.auth.models import User
-    users = User.objects.all().order_by('-date_joined')
+    # Show only regular users, not admins
+    users = User.objects.filter(is_superuser=False).order_by('-date_joined')
     
     context = {
         'users': users,
