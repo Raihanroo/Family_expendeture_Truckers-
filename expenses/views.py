@@ -37,12 +37,14 @@ from .serializers import (
 
 
 # --- API ViewSets ---
+@method_decorator(csrf_exempt, name='dispatch')
 class IncomeSourceViewSet(viewsets.ModelViewSet):
     queryset = IncomeSource.objects.all()
     serializer_class = IncomeSourceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ExpenseCategoryViewSet(viewsets.ModelViewSet):
     queryset = ExpenseCategory.objects.all()
     serializer_class = ExpenseCategorySerializer
