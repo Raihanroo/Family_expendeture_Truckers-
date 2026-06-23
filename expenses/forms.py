@@ -2,10 +2,11 @@
 Family Expenditure Management System - Forms
 Django forms for user input validation and rendering
 """
+
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Expense, ExpenseCategory, Budget, FamilyMember
+from .models import Expense, ExpenseCategory, Budget, BudgetHistory, FamilyMember
 
 
 class ExpenseForm(forms.ModelForm):
@@ -51,18 +52,18 @@ class ExpenseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Get user from kwargs
+        user = kwargs.pop("user", None)  # Get user from kwargs
         super().__init__(*args, **kwargs)
         self.fields["description"].required = False
         self.fields["category"].queryset = ExpenseCategory.objects.all()
         self.fields["category"].empty_label = "-- Select Category --"
-        
+
         # Filter members by user
         if user:
             self.fields["member"].queryset = FamilyMember.objects.filter(user=user)
         else:
             self.fields["member"].queryset = FamilyMember.objects.all()
-        
+
         self.fields["member"].empty_label = "-- Select Member --"
         self.fields["frequency"].required = False
         self.fields["recurring_end_date"].required = False
@@ -99,7 +100,7 @@ class UserCreationFormCustom(UserCreationForm):
 
 class BudgetForm(forms.ModelForm):
     """Form for setting monthly budget"""
-    
+
     class Meta:
         model = Budget
         fields = ["monthly_budget"]
@@ -115,9 +116,48 @@ class BudgetForm(forms.ModelForm):
         }
 
 
+class BudgetHistoryForm(forms.ModelForm):
+    """Form for setting a budget for a specific month/year (past, current, or future)"""
+
+    class Meta:
+        model = BudgetHistory
+        fields = ["year", "month", "monthly_budget"]
+        widgets = {
+            "year": forms.Select(attrs={"class": "form-control"}),
+            "month": forms.Select(attrs={"class": "form-control"}),
+            "monthly_budget": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Enter monthly budget in TK",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from datetime import datetime
+
+        current_year = datetime.today().year
+        # Allow selecting a couple of years back and a couple forward
+        year_choices = [(y, y) for y in range(current_year - 3, current_year + 2)]
+        self.fields["year"] = forms.ChoiceField(
+            choices=year_choices,
+            widget=forms.Select(attrs={"class": "form-control"}),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # year comes back as a string from ChoiceField; cast to int
+        if cleaned_data.get("year"):
+            cleaned_data["year"] = int(cleaned_data["year"])
+        return cleaned_data
+
+
 class FamilyMemberForm(forms.ModelForm):
     """Form for creating and editing family members"""
-    
+
     class Meta:
         model = FamilyMember
         fields = [

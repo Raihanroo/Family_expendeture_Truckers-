@@ -3,7 +3,39 @@
 
 **Base URL:** `http://localhost:8000/expenses/api/`
 
-**Authentication:** Required for all endpoints (Session-based)
+**Authentication:** Basic Authentication (username:password) - No CSRF token required
+
+---
+
+## Quick Start - Using Basic Authentication
+
+The API uses Basic Authentication, making it easy to access without CSRF tokens.
+
+### Postman Setup:
+1. Open your request
+2. Go to "Authorization" tab
+3. Select "Basic Auth" from dropdown
+4. Enter Username: `raihan`
+5. Enter Password: `123456`
+6. Send request
+
+### cURL Example:
+```bash
+curl -X GET http://127.0.0.1:8000/expenses/api/members/ \
+  -u raihan:123456
+```
+
+### Python Example:
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.get(
+    'http://127.0.0.1:8000/expenses/api/members/',
+    auth=HTTPBasicAuth('raihan', '123456')
+)
+print(response.json())
+```
 
 ---
 

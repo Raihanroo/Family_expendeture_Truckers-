@@ -2,6 +2,7 @@
 Family Expenditure Management System - Models
 Database models for expense tracking, budgets, and family members
 """
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -54,7 +55,7 @@ class Expense(models.Model):
 
 class Budget(models.Model):
     """Monthly budget model for users"""
-    
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="budget")
     monthly_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -65,6 +66,43 @@ class Budget(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.monthly_budget} TK"
+
+
+class BudgetHistory(models.Model):
+    """Per-month budget tracking. One row per user per (year, month),
+    so each month can have its own budget value (e.g. Jan ৪০০০, Feb ৫০০০)."""
+
+    MONTH_CHOICES = [
+        (1, "January"),
+        (2, "February"),
+        (3, "March"),
+        (4, "April"),
+        (5, "May"),
+        (6, "June"),
+        (7, "July"),
+        (8, "August"),
+        (9, "September"),
+        (10, "October"),
+        (11, "November"),
+        (12, "December"),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="budget_history"
+    )
+    year = models.IntegerField()
+    month = models.IntegerField(choices=MONTH_CHOICES)
+    monthly_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-year", "-month"]
+        unique_together = ("user", "year", "month")
+        verbose_name_plural = "Budget Histories"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_month_display()} {self.year} - {self.monthly_budget} TK"
 
 
 class SavingsGoal(models.Model):
@@ -109,7 +147,7 @@ class ActivityLog(models.Model):
 # Income Source Model
 class IncomeSource(models.Model):
     """Model for income sources"""
-    
+
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -119,7 +157,7 @@ class IncomeSource(models.Model):
 # Expense Category Model
 class ExpenseCategory(models.Model):
     """Model for expense categories"""
-    
+
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -129,13 +167,13 @@ class ExpenseCategory(models.Model):
 # Family Member Model
 class FamilyMember(models.Model):
     """Model for family members with their details"""
-    
+
     ROLE_CHOICES = [
         ("ADMIN", "Admin"),
         ("MEMBER", "Member"),
         ("Visitor", "Visitor"),
     ]
-    
+
     photo = CloudinaryField("image", folder="member_photos/", null=True, blank=True)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="family_memberships"
@@ -170,7 +208,7 @@ class FamilyMember(models.Model):
 # Expenditure Model
 class Expenditure(models.Model):
     """Model for tracking expenditures by family members"""
-    
+
     member = models.ForeignKey(
         FamilyMember, on_delete=models.CASCADE, related_name="expenditures"
     )

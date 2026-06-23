@@ -28,7 +28,7 @@
             border-radius: 15px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.2);
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
         }
         
         h1 {
@@ -46,22 +46,24 @@
         }
         
         .message {
-            padding: 12px;
+            padding: 14px 18px;
             margin-bottom: 20px;
             border-radius: 8px;
             text-align: center;
+            font-size: 15px;
+            font-weight: 600;
         }
         
         .message.success {
             background-color: #e8f5e9;
             color: #2e7d32;
-            border: 1px solid #66bb6a;
+            border: 2px solid #66bb6a;
         }
         
         .message.error {
             background-color: #ffebee;
             color: #c62828;
-            border: 1px solid #ef5350;
+            border: 2px solid #ef5350;
         }
         
         .budget-info {
@@ -160,7 +162,9 @@
             font-size: 14px;
         }
         
-        .form-group input {
+        .form-group input,
+        .form-group select,
+        .form-group .form-control {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -168,9 +172,12 @@
             font-size: 14px;
             font-family: inherit;
             transition: all 0.3s;
+            background: white;
         }
         
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group .form-control:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -221,6 +228,17 @@
             color: #999;
             margin-top: 5px;
         }
+
+        @media (max-width: 480px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0 !important;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
         
         .card-title {
             color: #333;
@@ -231,6 +249,156 @@
             align-items: center;
             gap: 8px;
         }
+
+        .history-section {
+            margin-bottom: 30px;
+        }
+
+        .history-note {
+            font-size: 11.5px;
+            color: #999;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .history-table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .history-table th {
+            background: #f5f7fa;
+            color: #555;
+            font-weight: 700;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+
+        .history-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef0f3;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .history-table tr:hover {
+            background: #fafbfc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status-badge.ok {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.exceeded {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-badge.no-data {
+            background: #f0f0f0;
+            color: #888;
+        }
+
+        .text-exceeded {
+            color: #f43f5e;
+            font-weight: 700;
+        }
+
+        .text-ok {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .no-history {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-size: 13px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .icon-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .icon-btn.edit-btn {
+            background: #e8eaff;
+            color: #667eea;
+        }
+
+        .icon-btn.edit-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .icon-btn.delete-btn {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .icon-btn.delete-btn:hover {
+            background: #c62828;
+            color: white;
+        }
+
+        .editing-banner {
+            background: #fff8e1;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editing-banner a {
+            color: #667eea;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .editing-row {
+            background: #fff8e1 !important;
+        }
     </style>
 </head>
 <body>
@@ -240,7 +408,7 @@
         
         {% if messages %}
             {% for message in messages %}
-                <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                <div class="message success">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -264,7 +432,7 @@
             <div class="info-row">
                 <span class="info-label">Remaining</span>
                 <span class="info-value" style="color: {% if budget.remaining < 0 %}#f43f5e{% else %}#10b981{% endif %};">
-                    ৳{{ budget.remaining|floatformat:2 }}
+                    {% if budget.remaining < 0 %}-৳{{ budget.spent|floatformat:2 }}{% else %}৳{{ budget.remaining|floatformat:2 }}{% endif %}
                 </span>
             </div>
             
@@ -281,37 +449,103 @@
             
             {% if budget.exceeded %}
             <div class="warning exceeded">
-                ⚠️ You have exceeded your monthly budget by ৳{{ budget.remaining|add:0|floatformat:2 }}
+                ⚠️ You have exceeded your monthly budget! Spent ৳{{ budget.spent|floatformat:2 }} out of ৳{{ budget.budget|floatformat:2 }}
             </div>
             {% elif budget.percentage >= 80 %}
             <div class="warning">
-                ⚠️ You have used 80% of your budget. Be careful with remaining expenses!
+                ⚠️ You have used {{ budget.percentage|floatformat:0 }}% of your budget. Be careful with remaining expenses!
             </div>
             {% endif %}
         </div>
         {% endif %}
-        
+
+        <!-- Per-Month Budget History Table -->
+        <div class="history-section">
+            <div class="card-title">📅 Monthly Budget History</div>
+            <p class="history-note">
+                ℹ️ Each row shows the <strong>actual budget you set</strong> for that specific month, along with how much you spent.
+            </p>
+
+            {% if history %}
+            <div class="history-table-wrapper">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Budget (৳)</th>
+                            <th>Spent (৳)</th>
+                            <th>Remaining (৳)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in history %}
+                        <tr{% if row.is_editing %} class="editing-row"{% elif row.is_current %} style="background:#f0f4ff;"{% endif %}>
+                            <td>{{ row.label }}{% if row.is_current %} <span class="status-badge ok" style="background:#e8eaff;color:#667eea;">Current</span>{% endif %}</td>
+                            <td>৳{{ row.budget|floatformat:2 }}</td>
+                            <td>৳{{ row.spent|floatformat:2 }}</td>
+                            <td class="{% if row.remaining < 0 %}text-exceeded{% else %}text-ok{% endif %}">
+                                {% if row.remaining < 0 %}-৳{{ row.spent|floatformat:2 }}{% else %}৳{{ row.remaining|floatformat:2 }}{% endif %}
+                            </td>
+                            <td>
+                                {% if row.exceeded %}
+                                    <span class="status-badge exceeded">⚠️ Exceeded</span>
+                                {% else %}
+                                    <span class="status-badge ok">✅ Within Budget</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'expenses:set_budget' %}?edit={{ row.id }}" class="icon-btn edit-btn">✏️ Edit</a>
+                                    <form method="POST" action="{% url 'expenses:delete_budget_history' row.id %}" onsubmit="return confirm('Delete budget for {{ row.label }}? This cannot be undone.');" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="icon-btn delete-btn">🗑️ Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-history">No budget history yet. Set a budget below to get started.</div>
+            {% endif %}
+        </div>
+
         <!-- Budget Form -->
+        {% if editing_entry %}
+        <div class="editing-banner">
+            <span>✏️ Editing budget for <strong>{{ editing_entry.get_month_display }} {{ editing_entry.year }}</strong></span>
+            <a href="{% url 'expenses:set_budget' %}">Cancel</a>
+        </div>
+        {% endif %}
         <form method="POST">
             {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="monthly_budget">Set Monthly Budget (TK)</label>
-                <input 
-                    type="number" 
-                    id="monthly_budget" 
-                    name="monthly_budget" 
-                    step="0.01"
-                    min="0"
-                    placeholder="Enter your monthly budget"
-                    value="{% if budget %}{{ budget.budget }}{% endif %}"
-                    required
-                >
-                <p class="help-text">💡 Tip: Set a realistic budget based on your average monthly expenses</p>
+            {% if editing_entry %}
+            <input type="hidden" name="original_edit_id" value="{{ editing_entry.id }}">
+            {% endif %}
+
+            <div class="form-row" style="display:flex; gap:15px;">
+                <div class="form-group" style="flex:1;">
+                    <label for="id_month">Month</label>
+                    {{ form.month }}
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label for="id_year">Year</label>
+                    {{ form.year }}
+                </div>
             </div>
-            
+
+            <div class="form-group">
+                <label for="id_monthly_budget">Set Monthly Budget (TK)</label>
+                {{ form.monthly_budget }}
+                <p class="help-text">💡 Tip: Choose any month — past, current, or future — and set a realistic budget for it. Saving again for the same month will update that month's budget.</p>
+            </div>
+
             <div class="button-group">
-                <button type="submit" class="btn btn-submit">💾 Save Budget</button>
+                <button type="submit" class="btn btn-submit">{% if editing_entry %}💾 Update Budget{% else %}💾 Save Budget{% endif %}</button>
                 <a href="{% url 'expenses:home' %}" class="btn btn-cancel">← Back to Dashboard</a>
             </div>
         </form>
