@@ -432,7 +432,7 @@
             <div class="info-row">
                 <span class="info-label">Remaining</span>
                 <span class="info-value" style="color: {% if budget.remaining < 0 %}#f43f5e{% else %}#10b981{% endif %};">
-                    {% if budget.remaining < 0 %}-৳{{ budget.spent|floatformat:2 }}{% else %}৳{{ budget.remaining|floatformat:2 }}{% endif %}
+                    {% if budget.remaining < 0 %}-৳{{ budget.remaining|floatformat:2|slice:"1:" }}{% else %}৳{{ budget.remaining|floatformat:2 }}{% endif %}
                 </span>
             </div>
             
@@ -466,41 +466,7 @@
         ℹ️ Each row shows the <strong>actual budget you set</strong> for that specific month, along with how much you spent.
     </p>
 
-    <!-- Filter Form -->
-    <div class="history-filter" style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
-        <form method="GET" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 150px;">
-                <label for="filter_month" style="display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px;">Month</label>
-                <select name="filter_month" id="filter_month" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;">
-                    <option value="">All Months</option>
-                    {% for month_num, month_name in all_months %}
-                        <option value="{{ month_num }}" {% if filter_month == month_num|stringformat:"s" %}selected{% endif %}>
-                            {{ month_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div style="flex: 1; min-width: 150px;">
-                <label for="filter_year" style="display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px;">Year</label>
-                <select name="filter_year" id="filter_year" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;">
-                    <option value="">All Years</option>
-                    {% for year in all_years %}
-                        <option value="{{ year }}" {% if filter_year == year|stringformat:"s" %}selected{% endif %}>
-                            {{ year }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                🔍 Filter
-            </button>
-            {% if filter_month or filter_year %}
-            <a href="{% url 'expenses:set_budget' %}" style="padding: 8px 16px; background: #f3f4f6; color: #555; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s;">
-                ✕ Clear
-            </a>
-            {% endif %}
-        </form>
-    </div>
+    
 
     {% if history %}
     <div class="history-table-wrapper">
