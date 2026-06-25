@@ -6,6 +6,7 @@ from .models import (
     FamilyMember,
     Expenditure,
     Budget,
+    BudgetHistory,  # ← Added
     SavingsGoal,
     ActivityLog,
     IncomeSource,
@@ -101,6 +102,20 @@ class BudgetAdmin(admin.ModelAdmin):
         css = {"all": ("admin/css/custom_admin.css",)}
 
 
+# BudgetHistory Admin
+class BudgetHistoryAdmin(admin.ModelAdmin):
+    list_display = ["user", "month", "year", "monthly_budget", "created_at"]
+    list_filter = ["year", "month", "created_at"]
+    search_fields = ["user__username"]
+    date_hierarchy = "created_at"
+    ordering = ["-year", "-month"]
+    list_per_page = 50
+    readonly_fields = ["created_at", "updated_at"]
+
+    class Media:
+        css = {"all": ("admin/css/custom_admin.css",)}
+
+
 # SavingsGoal Admin
 class SavingsGoalAdmin(admin.ModelAdmin):
     list_display = [
@@ -147,6 +162,7 @@ admin.site.register(ExpenseCategory, ExpenseCategoryAdmin)
 admin.site.register(FamilyMember, FamilyMemberAdmin)
 admin.site.register(Expenditure, ExpenditureAdmin)
 admin.site.register(Budget, BudgetAdmin)
+admin.site.register(BudgetHistory, BudgetHistoryAdmin)  # ← Added
 admin.site.register(SavingsGoal, SavingsGoalAdmin)
 admin.site.register(ActivityLog, ActivityLogAdmin)
 admin.site.register(IncomeSource, IncomeSourceAdmin)
