@@ -460,59 +460,95 @@
         {% endif %}
 
         <!-- Per-Month Budget History Table -->
-        <div class="history-section">
-            <div class="card-title">📅 Monthly Budget History</div>
-            <p class="history-note">
-                ℹ️ Each row shows the <strong>actual budget you set</strong> for that specific month, along with how much you spent.
-            </p>
+    <div class="history-section">
+    <div class="card-title">📅 Monthly Budget History</div>
+    <p class="history-note">
+        ℹ️ Each row shows the <strong>actual budget you set</strong> for that specific month, along with how much you spent.
+    </p>
 
-            {% if history %}
-            <div class="history-table-wrapper">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Month</th>
-                            <th>Budget (৳)</th>
-                            <th>Spent (৳)</th>
-                            <th>Remaining (৳)</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in history %}
-                        <tr{% if row.is_editing %} class="editing-row"{% elif row.is_current %} style="background:#f0f4ff;"{% endif %}>
-                            <td>{{ row.label }}{% if row.is_current %} <span class="status-badge ok" style="background:#e8eaff;color:#667eea;">Current</span>{% endif %}</td>
-                            <td>৳{{ row.budget|floatformat:2 }}</td>
-                            <td>৳{{ row.spent|floatformat:2 }}</td>
-                            <td class="{% if row.remaining < 0 %}text-exceeded{% else %}text-ok{% endif %}">
-                                {% if row.remaining < 0 %}-৳{{ row.spent|floatformat:2 }}{% else %}৳{{ row.remaining|floatformat:2 }}{% endif %}
-                            </td>
-                            <td>
-                                {% if row.exceeded %}
-                                    <span class="status-badge exceeded">⚠️ Exceeded</span>
-                                {% else %}
-                                    <span class="status-badge ok">✅ Within Budget</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="{% url 'expenses:set_budget' %}?edit={{ row.id }}" class="icon-btn edit-btn">✏️ Edit</a>
-                                    <form method="POST" action="{% url 'expenses:delete_budget_history' row.id %}" onsubmit="return confirm('Delete budget for {{ row.label }}? This cannot be undone.');" style="display:inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="icon-btn delete-btn">🗑️ Delete</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Filter Form -->
+    <div class="history-filter" style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
+        <form method="GET" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 150px;">
+                <label for="filter_month" style="display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px;">Month</label>
+                <select name="filter_month" id="filter_month" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;">
+                    <option value="">All Months</option>
+                    {% for month_num, month_name in all_months %}
+                        <option value="{{ month_num }}" {% if filter_month == month_num|stringformat:"s" %}selected{% endif %}>
+                            {{ month_name }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
-            {% else %}
-            <div class="no-history">No budget history yet. Set a budget below to get started.</div>
+            <div style="flex: 1; min-width: 150px;">
+                <label for="filter_year" style="display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px;">Year</label>
+                <select name="filter_year" id="filter_year" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;">
+                    <option value="">All Years</option>
+                    {% for year in all_years %}
+                        <option value="{{ year }}" {% if filter_year == year|stringformat:"s" %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                🔍 Filter
+            </button>
+            {% if filter_month or filter_year %}
+            <a href="{% url 'expenses:set_budget' %}" style="padding: 8px 16px; background: #f3f4f6; color: #555; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s;">
+                ✕ Clear
+            </a>
             {% endif %}
-        </div>
+        </form>
+    </div>
+
+    {% if history %}
+    <div class="history-table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Budget (৳)</th>
+                    <th>Spent (৳)</th>
+                    <th>Remaining (৳)</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in history %}
+                <tr{% if row.is_editing %} class="editing-row"{% elif row.is_current %} style="background:#f0f4ff;"{% endif %}>
+                    <td>{{ row.label }}{% if row.is_current %} <span class="status-badge ok" style="background:#e8eaff;color:#667eea;">Current</span>{% endif %}</td>
+                    <td>৳{{ row.budget|floatformat:2 }}</td>
+                    <td>৳{{ row.spent|floatformat:2 }}</td>
+                    <td class="{% if row.remaining < 0 %}text-exceeded{% else %}text-ok{% endif %}">
+                        {% if row.remaining < 0 %}-৳{{ row.spent|floatformat:2 }}{% else %}৳{{ row.remaining|floatformat:2 }}{% endif %}
+                    </td>
+                    <td>
+                        {% if row.exceeded %}
+                            <span class="status-badge exceeded">⚠️ Exceeded</span>
+                        {% else %}
+                            <span class="status-badge ok">✅ Within Budget</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'expenses:set_budget' %}?edit={{ row.id }}" class="icon-btn edit-btn">✏️ Edit</a>
+                            <form method="POST" action="{% url 'expenses:delete_budget_history' row.id %}" onsubmit="return confirm('Delete budget for {{ row.label }}? This cannot be undone.');" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="icon-btn delete-btn">🗑️ Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-history">No budget history yet. Set a budget below to get started.</div>
+    {% endif %}
+</div>
 
         <!-- Budget Form -->
         {% if editing_entry %}
