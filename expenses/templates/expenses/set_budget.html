@@ -522,7 +522,7 @@
                     <td>৳{{ row.budget|floatformat:2 }}</td>
                     <td>৳{{ row.spent|floatformat:2 }}</td>
                     <td class="{% if row.remaining < 0 %}text-exceeded{% else %}text-ok{% endif %}">
-                        {% if row.remaining < 0 %}-৳{{ row.spent|floatformat:2 }}{% else %}৳{{ row.remaining|floatformat:2 }}{% endif %}
+                       ৳{{ row.remaining|floatformat:2 }}
                     </td>
                     <td>
                         {% if row.exceeded %}
