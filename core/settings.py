@@ -16,8 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY
 SECRET_KEY = os.environ.get(
-    "SECRET_KEY",
-    "django-insecure-uj*1wsjabg2j64i$5wi1df8unqj3kz9s#vhd6t36%*mm1_3-59"
+    "SECRET_KEY", "django-insecure-uj*1wsjabg2j64i$5wi1df8unqj3kz9s#vhd6t36%*mm1_3-59"
 )
 
 DEBUG = True
@@ -37,13 +36,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "expenses",
-
     "crispy_bootstrap5",
     "crispy_forms",
-
     "cloudinary",
 ]
 
@@ -101,7 +98,9 @@ DATABASES = {
 
 # PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -143,6 +142,12 @@ SESSION_COOKIE_AGE = 1209600
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        # JWT first: this is what the Flutter desktop/mobile/tablet apps use.
+        # A device logs in once, stores the refresh token locally, and stays
+        # signed in indefinitely (no cookies, works identically on every
+        # platform Flutter targets).
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # Kept for the existing Django template-based web dashboard.
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
@@ -152,10 +157,26 @@ REST_FRAMEWORK = {
     ],
 }
 
+# SIMPLE JWT (token auth for Flutter desktop/mobile/tablet clients)
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    # Short-lived access token: if a device is stolen/compromised, the
+    # window of exposure is small.
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=6),
+    # Long-lived refresh token: a family member shouldn't have to log back
+    # in every few hours on their own phone/laptop.
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    # Issuing a new refresh token on every refresh + blacklisting the old
+    # one means a leaked refresh token has a limited useful lifetime.
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+}
+
 # EMAIL
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@familyexpense.com"
 
 # PASSWORD RESET
 PASSWORD_RESET_TIMEOUT = 3600
-

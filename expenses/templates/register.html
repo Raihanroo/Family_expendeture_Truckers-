@@ -133,6 +133,12 @@
     <div class="register-card">
         <h2>Admin Registration</h2>
         
+        {% if error %}
+            <div class="error-message">
+                ⚠️ {{ error }}
+            </div>
+        {% endif %}
+        
         {% if messages %}
             {% for message in messages %}
                 <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">

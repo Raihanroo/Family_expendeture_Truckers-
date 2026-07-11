@@ -3,13 +3,39 @@ Family Expenditure Management System - Models
 Database models for expense tracking, budgets, and family members
 """
 
+import uuid as uuid_lib
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
 
 
-class Expense(models.Model):
+class SyncModel(models.Model):
+    """Abstract base class for offline-first, multi-device sync.
+
+    Every syncable model gets:
+    - uuid: a globally-unique client-generated identifier. Desktop/mobile apps
+      create records offline using this UUID (never the local auto-increment
+      `id`), so two devices can never collide when they both create a record
+      while offline.
+    - updated_at: used as the sync "cursor". Clients ask the server for
+      "everything changed since <timestamp>" and the server compares against
+      this field.
+    - is_deleted: soft delete. Records are never hard-deleted so that other
+      devices can find out about a deletion during their next sync pull.
+    """
+
+    uuid = models.UUIDField(
+        default=uuid_lib.uuid4, editable=False, unique=True, db_index=True
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+
+class Expense(SyncModel):
     FREQUENCY_CHOICES = [
         ("ONCE", "One Time"),
         ("DAILY", "Daily"),
@@ -37,7 +63,6 @@ class Expense(models.Model):
     description = models.TextField(blank=True, null=True)
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     is_recurring = models.BooleanField(default=False)
     frequency = models.CharField(
         max_length=20, choices=FREQUENCY_CHOICES, null=True, blank=True
@@ -53,13 +78,12 @@ class Expense(models.Model):
         return f"{self.user.username} - {category_name} - {self.amount} TK"
 
 
-class Budget(models.Model):
+class Budget(SyncModel):
     """Monthly budget model for users"""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="budget")
     monthly_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     alert_percentage = models.IntegerField(
         default=80, help_text="Alert when spending reaches this percentage"
     )
@@ -68,7 +92,7 @@ class Budget(models.Model):
         return f"{self.user.username} - {self.monthly_budget} TK"
 
 
-class BudgetHistory(models.Model):
+class BudgetHistory(SyncModel):
     """Per-month budget tracking. One row per user per (year, month),
     so each month can have its own budget value (e.g. Jan ৪০০০, Feb ৫০০০)."""
 
@@ -94,7 +118,6 @@ class BudgetHistory(models.Model):
     month = models.IntegerField(choices=MONTH_CHOICES)
     monthly_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-year", "-month"]
@@ -105,7 +128,7 @@ class BudgetHistory(models.Model):
         return f"{self.user.username} - {self.get_month_display()} {self.year} - {self.monthly_budget} TK"
 
 
-class SavingsGoal(models.Model):
+class SavingsGoal(SyncModel):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="savings_goals"
     )
@@ -145,7 +168,7 @@ class ActivityLog(models.Model):
 
 
 # Income Source Model
-class IncomeSource(models.Model):
+class IncomeSource(SyncModel):
     """Model for income sources"""
 
     name = models.CharField(max_length=100)
@@ -155,7 +178,7 @@ class IncomeSource(models.Model):
 
 
 # Expense Category Model
-class ExpenseCategory(models.Model):
+class ExpenseCategory(SyncModel):
     """Model for expense categories"""
 
     name = models.CharField(max_length=100)
@@ -165,7 +188,7 @@ class ExpenseCategory(models.Model):
 
 
 # Family Member Model
-class FamilyMember(models.Model):
+class FamilyMember(SyncModel):
     """Model for family members with their details"""
 
     ROLE_CHOICES = [
@@ -206,7 +229,7 @@ class FamilyMember(models.Model):
 
 
 # Expenditure Model
-class Expenditure(models.Model):
+class Expenditure(SyncModel):
     """Model for tracking expenditures by family members"""
 
     member = models.ForeignKey(

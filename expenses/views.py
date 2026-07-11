@@ -777,12 +777,13 @@ def set_budget(request):
         if budget_amount > 0
         else None
     )
-
     # --- Per-month history table (every BudgetHistory row this user has, newest first) ---
-    history = []
-    for entry in BudgetHistory.objects.filter(user=request.user).order_by(
+    budget_query = BudgetHistory.objects.filter(user=request.user).order_by(
         "-year", "-month"
-    ):
+    )
+
+    history = []
+    for entry in budget_query:
         month_expenses = Expense.objects.filter(
             user=request.user, date__year=entry.year, date__month=entry.month
         )
